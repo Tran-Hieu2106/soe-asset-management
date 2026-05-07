@@ -20,12 +20,12 @@ import java.util.Map;
  * so controllers never need try/catch blocks.
  *
  * Handles:
- *  - ResourceNotFoundException     → 404
- *  - BusinessRuleException         → 400
- *  - AccessDeniedException         → 403 (custom, application-level)
- *  - Spring AccessDeniedException  → 403 (Spring Security RBAC)
- *  - MethodArgumentNotValidException → 400 with field-level errors
- *  - Exception (catch-all)         → 500
+ *  - ResourceNotFoundException     -> 404
+ *  - BusinessRuleException         -> 400
+ *  - AccessDeniedException         -> 403 (custom, application-level)
+ *  - Spring AccessDeniedException  -> 403 (Spring Security RBAC)
+ *  - MethodArgumentNotValidException -> 400 with field-level errors
+ *  - Exception (catch-all)         -> 500
  */
 @Slf4j
 @RestControllerAdvice
