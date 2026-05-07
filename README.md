@@ -20,9 +20,9 @@ A standardized platform for managing fixed assets, consumable stock, handovers, 
 
 ```
 soe-asset-management/
-├── backend/        → Spring Boot REST API      [M1 foundation, M2/M3/M4 modules]
-├── frontend/       → React + TypeScript (Vite) [M5]
-└── docs/           → API spec, DB schema, diagrams [shared]
+├── backend/        -> Spring Boot REST API      [M1 foundation, M2/M3/M4 modules]
+├── frontend/       -> React + TypeScript (Vite) [M5]
+└── docs/           -> API spec, DB schema, diagrams [shared]
 ```
 
 ---
@@ -40,30 +40,16 @@ soe-asset-management/
 docker-compose up --build
 ```
 
-- Backend API → `http://localhost:8080`
-- Frontend    → `http://localhost:5173`
+- Backend API -> `http://localhost:8080`
+- Frontend    -> `http://localhost:5173`
 
 ### Run individually
 ```bash
 # Backend
-cd backend && mvn spring-boot:run
+cd backend && ./mvnw spring-boot:run    
 
 # Frontend
 cd frontend && npm install && npm run dev
-```
-
----
-
-## Git Workflow
-
-```
-main                        ← production-ready only (PR required)
-foundation/auth             ← M1
-fixed-assets/[feature]      ← M2   e.g. fixed-assets/depreciation-engine
-stock/[feature]             ← M3   e.g. stock/receipt-transaction
-handover/[feature]          ← M4   e.g. handover/approval-workflow
-report/[feature]            ← M4   e.g. report/excel-export
-frontend/[feature]          ← M5   e.g. frontend/asset-list-page
 ```
 
 ---
@@ -72,7 +58,7 @@ frontend/[feature]          ← M5   e.g. frontend/asset-list-page
 
 | Document | Location | Owner |
 |----------|----------|-------|
-| API Specification | `docs/api-spec.md` | M1 (all contribute) |
+| API Specification | `docs/api-spec.md` | M1 |
 | Database Schema | `docs/database-schema.md` | M1 |
 | ERD Diagram | `docs/diagrams/erd.png` | M1 |
 | Architecture Diagram | `docs/diagrams/architecture.png` | Shared |
