@@ -26,6 +26,7 @@ public class ReceiptRequest {
     private String documentRef;
 
     @NotNull(message = "Ngày chứng từ không được null")
+    @PastOrPresent(message = "Ngày chứng từ không được ở tương lai")
     private LocalDate documentDate;
 
     private String notes;

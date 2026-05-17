@@ -75,6 +75,10 @@ public class StockTransactionService {
         BigDecimal available = transactionRepository
                 .checkAvailableStock(req.getMaterialId(), req.getStorageLocationId());
 
+        BigDecimal finalUnitPrice = req.getUnitPrice() != null 
+                            ? req.getUnitPrice() 
+                            : material.getUnitPrice(); // fallback to material's default price if not provided in request
+
         if (available.compareTo(req.getQuantity()) < 0) {
             log.warn("Insufficient stock — required: {}, available: {}",
                     req.getQuantity(), available);
@@ -90,7 +94,7 @@ public class StockTransactionService {
                 .transactionType(TransactionType.ISSUE)
                 .quantity(req.getQuantity())
                 .unitOfMeasure(material.getUnitOfMeasure())
-                .unitPrice(req.getUnitPrice())
+                .unitPrice(finalUnitPrice)
                 .requestingDepartmentId(req.getRequestingDepartmentId())
                 .requestedBy(req.getRequestedBy())
                 .documentRef(req.getDocumentRef())

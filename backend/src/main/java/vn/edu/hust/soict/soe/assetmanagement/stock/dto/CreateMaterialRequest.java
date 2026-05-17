@@ -27,6 +27,7 @@ public class CreateMaterialRequest {
     private String     supplierCode;
     private BigDecimal unitPrice;
 
+    @NotNull(message = "Tồn kho tối thiểu không được null")
     @DecimalMin(value = "0.0", message = "Tồn kho tối thiểu phải >= 0")
     @Builder.Default
     private BigDecimal minimumStock = BigDecimal.ZERO;

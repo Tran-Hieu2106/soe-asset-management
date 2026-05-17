@@ -17,3 +17,10 @@ public class UpdateMaterialRequest {
     private Boolean    isActive;
     private String     notes;
 }
+
+// ── VALIDATION RULES ────────────────────────────────────────────────────────────
+@Size(min = 1, message = "Tên vật tư không được rỗng")
+private String name;
+
+@DecimalMin(value = "0.0", message = "Tồn kho tối thiểu phải >= 0")
+private BigDecimal minimumStock;
