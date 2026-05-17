@@ -106,18 +106,28 @@ public class FixedAssetService {
      */
     private FixedAsset calculateStraightLine(FixedAsset asset) {
         BigDecimal originalCost = asset.getOriginalCost();
+        BigDecimal salvageValue = asset.getSalvageValue() != null ? asset.getSalvageValue() : BigDecimal.ZERO;
         int usefulLifeYears = asset.getUsefulLifeYears();
+
         if (usefulLifeYears <= 0) return asset;
 
-        // Annual Depr = Original Cost / Useful Life
-        BigDecimal yearlyDepr = originalCost.divide(BigDecimal.valueOf(usefulLifeYears), 2, RoundingMode.HALF_UP);
-        // Monthly Depr = Annual Depr / 12
-        BigDecimal monthlyDepr = yearlyDepr.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
-        
-        long monthsUsed = ChronoUnit.MONTHS.between(asset.getAcquisitionDate(), LocalDate.now());
-        
-        BigDecimal accumulated = monthlyDepr.multiply(BigDecimal.valueOf(Math.max(0, monthsUsed)));
-        updateFinancials(asset, accumulated);
+        long totalMonths = usefulLifeYears * 12L;
+        long monthsUsed = Math.max(0, ChronoUnit.MONTHS.between(asset.getAcquisitionDate(), LocalDate.now()));
+
+        BigDecimal depreciableBase = originalCost.subtract(salvageValue);
+        BigDecimal accumulated;
+
+        if (monthsUsed >= totalMonths) {
+            // TRUE-UP: Đã hết vòng đời, ép hao mòn bằng đúng Giá trị phải khấu hao
+            accumulated = depreciableBase;
+        } else {
+            // CÁC THÁNG GIỮA KỲ: Giữ scale = 2 để đảm bảo độ chính xác hệ thống lõi
+            accumulated = depreciableBase
+                    .multiply(BigDecimal.valueOf(monthsUsed))
+                    .divide(BigDecimal.valueOf(totalMonths), 2, RoundingMode.HALF_UP);
+        }
+
+        updateFinancials(asset, accumulated, salvageValue);
         return asset;
     }
 
@@ -126,44 +136,86 @@ public class FixedAssetService {
      */
     private FixedAsset calculateDecliningBalance(FixedAsset asset) {
         BigDecimal originalCost = asset.getOriginalCost();
-        int T = asset.getUsefulLifeYears();
-        long monthsUsed = ChronoUnit.MONTHS.between(asset.getAcquisitionDate(), LocalDate.now());
+        BigDecimal salvageValue = asset.getSalvageValue() != null ? asset.getSalvageValue() : BigDecimal.ZERO;
+        int totalYears = asset.getUsefulLifeYears();
 
-        if (T <= 0 || monthsUsed <= 0) return asset;
+        if (totalYears <= 0) return asset;
 
-        // 1. Determine the adjustment coefficient based on useful life
-        double multiplier = (T <= 4) ? 1.5 : (T <= 6) ? 2.0 : 2.5;
-        
-        // 2. Accelerated Depreciation Rate = (1 / T) * Multiplier
-        double annualRate = (1.0 / T) * multiplier;
-        
-        BigDecimal remainingValue = originalCost;
-        int fullYearsUsed = (int) (monthsUsed / 12);
-        int remainingMonths = (int) (monthsUsed % 12);
+        long totalMonths = totalYears * 12L;
+        long monthsUsed = Math.max(0, ChronoUnit.MONTHS.between(asset.getAcquisitionDate(), LocalDate.now()));
 
-        // 3. Iterative calculation of accumulated depreciation over years
-        for (int i = 0; i < fullYearsUsed; i++) {
-            BigDecimal yearlyDepr = remainingValue.multiply(BigDecimal.valueOf(annualRate));
-            remainingValue = remainingValue.subtract(yearlyDepr);
+        BigDecimal depreciableBase = originalCost.subtract(salvageValue);
+
+        // TRUE-UP: Đã hết vòng đời thì không cần chạy vòng lặp, gán thẳng số tối đa
+        if (monthsUsed >= totalMonths) {
+            updateFinancials(asset, depreciableBase, salvageValue);
+            return asset;
         }
 
-        // 4. Calculate remaining months for the current year
-        BigDecimal currentYearDeprRate = remainingValue.multiply(BigDecimal.valueOf(annualRate));
-        BigDecimal monthlyDepr = currentYearDeprRate.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
-        remainingValue = remainingValue.subtract(monthlyDepr.multiply(BigDecimal.valueOf(remainingMonths)));
+        // 1. Xác định hệ số điều chỉnh
+        double multiplier = (totalYears <= 4) ? 1.5 : (totalYears <= 6) ? 2.0 : 2.5;
+        double acceleratedRate = (1.0 / totalYears) * multiplier;
 
-        BigDecimal accumulated = originalCost.subtract(remainingValue);
-        updateFinancials(asset, accumulated);
+        BigDecimal remainingBase = depreciableBase;
+        BigDecimal accumulated = BigDecimal.ZERO;
+
+        int fullYearsUsed = (int) (monthsUsed / 12);
+        int remainingMonths = (int) (monthsUsed % 12);
+        boolean switchedToStraightLine = false;
+
+        // 2. Chạy tính toán cho các NĂM chẵn đã qua
+        for (int year = 1; year <= fullYearsUsed; year++) {
+            int remainingYearsAtStart = totalYears - year + 1;
+            
+            // Tính các mức khấu hao với độ chính xác hệ thống (scale = 2)
+            BigDecimal currentStraightLine = remainingBase.divide(BigDecimal.valueOf(remainingYearsAtStart), 2, RoundingMode.HALF_UP);
+            BigDecimal currentAccelerated = remainingBase.multiply(BigDecimal.valueOf(acceleratedRate)).setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal yearlyDepr;
+            // KIỂM TRA GIAO CẮT: Mức Giảm dần <= mức Bình quân -> Bẻ lái sang Đường thẳng
+            if (switchedToStraightLine || currentAccelerated.compareTo(currentStraightLine) <= 0) {
+                switchedToStraightLine = true;
+                yearlyDepr = currentStraightLine;
+            } else {
+                yearlyDepr = currentAccelerated;
+            }
+
+            accumulated = accumulated.add(yearlyDepr);
+            remainingBase = remainingBase.subtract(yearlyDepr);
+        }
+
+        // 3. Chạy tính toán cho các THÁNG LẺ của năm hiện tại
+        if (remainingMonths > 0) {
+            int currentYear = fullYearsUsed + 1;
+            int remainingYearsAtStart = totalYears - currentYear + 1;
+
+            BigDecimal currentStraightLine = remainingBase.divide(BigDecimal.valueOf(remainingYearsAtStart), 2, RoundingMode.HALF_UP);
+            BigDecimal currentAccelerated = remainingBase.multiply(BigDecimal.valueOf(acceleratedRate)).setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal yearlyDeprForCurrentYear;
+            if (switchedToStraightLine || currentAccelerated.compareTo(currentStraightLine) <= 0) {
+                yearlyDeprForCurrentYear = currentStraightLine;
+            } else {
+                yearlyDeprForCurrentYear = currentAccelerated;
+            }
+
+            BigDecimal monthlyDepr = yearlyDeprForCurrentYear.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
+            accumulated = accumulated.add(monthlyDepr.multiply(BigDecimal.valueOf(remainingMonths)));
+        }
+
+        updateFinancials(asset, accumulated, salvageValue);
         return asset;
     }
 
     /**
      * Updates financial fields for the asset entity.
      */
-    private void updateFinancials(FixedAsset asset, BigDecimal accumulated) {
-        asset.setAccumulatedDepreciation(accumulated);
-        BigDecimal netValue = asset.getOriginalCost().subtract(accumulated);
-        asset.setNetBookValue(netValue.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : netValue);
+    private void updateFinancials(FixedAsset asset, BigDecimal accumulated, BigDecimal salvageValue) {
+        // Ép chuẩn format 2 chữ số thập phân trước khi lưu vào Database
+        asset.setAccumulatedDepreciation(accumulated.setScale(2, RoundingMode.HALF_UP));
+        
+        BigDecimal netValue = asset.getOriginalCost().subtract(asset.getAccumulatedDepreciation());
+        asset.setNetBookValue(netValue.max(salvageValue).setScale(2, RoundingMode.HALF_UP));
     }
 
     /**
