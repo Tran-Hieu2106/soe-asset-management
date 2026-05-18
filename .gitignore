@@ -48,7 +48,7 @@ backend/src/main/resources/application-dev.yaml
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
-frontend/*.local
+#frontend/*.local
 
 # ── Frontend — Logs ──────────────────────────────────────────
 frontend/logs/
@@ -68,7 +68,7 @@ lerna-debug.log*
 
 # ── Docker / Environment secrets ─────────────────────────────
 .env
-.env.local
+#.env.local
 .env.production
 # Keep the example template
 !.env.example
