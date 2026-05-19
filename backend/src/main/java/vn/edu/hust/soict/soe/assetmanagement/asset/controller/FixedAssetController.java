@@ -6,6 +6,7 @@ import vn.edu.hust.soict.soe.assetmanagement.asset.entity.FixedAsset;
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
 import vn.edu.hust.soict.soe.assetmanagement.asset.service.FixedAssetService;
 import vn.edu.hust.soict.soe.assetmanagement.asset.repository.AssetHistoryRepository; // Import thêm để lấy lịch sử
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +20,10 @@ import java.util.List;
 import java.util.UUID;
 /**
  * Fixed asset endpoints.
- * Handles GET, POST, PATCH for /api/v1/fixed-assets.
+ * Handles GET, POST, PATCH for /api/assets.
  */
 @RestController
-@RequestMapping("/api/v1/fixed-assets")
+@RequestMapping("/api/assets")
 @Tag(name = "Fixed Assets", description = "Fixed Asset Management Module (FA-01 -> FA-04)")
 public class FixedAssetController {
 
