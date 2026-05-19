@@ -18,7 +18,10 @@ import vn.edu.hust.soict.soe.assetmanagement.audit.repository.AuditLogRepository
 import vn.edu.hust.soict.soe.assetmanagement.user.entity.User;
 
 import java.util.UUID;
-
+/**
+ * Audit log service (RP-03).
+ * Provides the centralized log() method used by all other modules.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,15 +29,18 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
 
+    /**
+     * RP-03: Read-only query for Audit Logs.
+     */
     @Transactional(readOnly = true)
     public Page<AuditLogDto> getAuditLogs(String module, String action, Pageable pageable) {
         return auditLogRepository.searchLogs(module, action, pageable)
                 .map(AuditLogDto::from);
     }
-
+    
     /**
-     * Ghi log hệ thống. Hàm này yêu cầu Transactional(Propagation.MANDATORY) hoặc REQUIRED 
-     * để luôn gắn cùng transaction với hàm gọi nó. Nếu hàm gọi bị rollback, log cũng rollback.
+     * Write an audit log entry. This method should be called within the same transaction as the business logic 
+     * so if the transaction rolls back, the log will not be saved either, ensuring consistency between logs and data state.
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public void log(String module, String action, String recordId, String recordCode, 
@@ -43,7 +49,7 @@ public class AuditLogService {
         String username = "system";
         UUID userId = null;
 
-        // Lấy context user hiện tại
+        // Get current user info from security context
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User) {
             User currentUser = (User) auth.getPrincipal();
@@ -51,7 +57,7 @@ public class AuditLogService {
             userId = currentUser.getId();
         }
 
-        // Lấy IP
+        // Get client IP address from request context
         String ipAddress = "unknown";
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
@@ -62,6 +68,7 @@ public class AuditLogService {
             }
         }
 
+        // Build and save the audit log entry
         AuditLog auditLog = AuditLog.builder()
                 .module(module)
                 .action(action)
@@ -74,10 +81,11 @@ public class AuditLogService {
                 .newValue(newValue)
                 .description(description)
                 .build();
-        
+         
         if (auditLog != null) {
             auditLogRepository.save(auditLog);
             }
         log.info("Audit log written: [{}] {} - {}", module, action, description);
     }
+
 }

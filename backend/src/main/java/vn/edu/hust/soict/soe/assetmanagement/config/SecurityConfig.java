@@ -73,13 +73,13 @@ public class SecurityConfig {
                     "/v3/api-docs/**"
                 ).permitAll()
 
-                // User management — SYSTEM_ADMIN only
-                .requestMatchers("/api/users/**")
-                    .hasRole("SYSTEM_ADMIN")
-
                 // Current user profile — any authenticated user
                 .requestMatchers(HttpMethod.GET, "/api/users/me")
                     .authenticated()
+                    
+                // User management — SYSTEM_ADMIN only
+                .requestMatchers("/api/users/**")
+                    .hasRole("SYSTEM_ADMIN")
 
                 // Fixed assets — ASSET_MANAGER creates/updates, others read
                 .requestMatchers(HttpMethod.GET, "/api/assets/**")

@@ -20,7 +20,7 @@
         <java.version>17</java.version>
     </properties>
 
-    <dependencies>
+    <dependencies>        
         <!-- Core Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -69,6 +69,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- JWT Library -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -95,6 +101,8 @@
             <version>2.3.0</version>
         </dependency>
     </dependencies>
+
+
 
     <build>
         <plugins>            

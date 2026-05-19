@@ -1,0 +1,154 @@
+/* LoginPage.css */
+
+:root {
+  --login-accent: #1a5276;
+  --login-accent-hover: #154360;
+  --login-bg: #f0f2f5;
+  --login-card-bg: #ffffff;
+  --login-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+  --login-border: #dce1e7;
+  --login-text: #1a1a2e;
+  --login-muted: #6b7280;
+}
+
+/* ── Page layout ──────────────────────────────────────────── */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--login-bg);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(26,82,118,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(26,82,118,0.04) 0%, transparent 50%);
+  padding: 24px;
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+
+.login-card {
+  background: var(--login-card-bg);
+  border-radius: 12px;
+  box-shadow: var(--login-shadow);
+  border: 1px solid var(--login-border);
+  padding: 40px 40px 32px;
+  width: 100%;
+  max-width: 420px;
+  animation: fadeUp 0.35s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-emblem {
+  display: inline-flex;
+  margin-bottom: 14px;
+}
+
+.login-emblem svg {
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 2px 8px rgba(26,82,118,0.25));
+}
+
+.login-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--login-text);
+  margin: 0 0 4px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.login-subtitle {
+  font-size: 13px;
+  color: var(--login-muted);
+  margin: 0;
+}
+
+/* ── Form overrides ───────────────────────────────────────── */
+
+.login-card .ant-form-item-label > label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.login-card .ant-input-affix-wrapper,
+.login-card .ant-input {
+  border-radius: 8px;
+  border-color: var(--login-border);
+  font-size: 14px;
+}
+
+.login-card .ant-input-affix-wrapper:hover,
+.login-card .ant-input:hover {
+  border-color: var(--login-accent);
+}
+
+.login-card .ant-input-affix-wrapper:focus,
+.login-card .ant-input-affix-wrapper-focused {
+  border-color: var(--login-accent);
+  box-shadow: 0 0 0 2px rgba(26,82,118,0.12);
+}
+
+/* ── Login button ─────────────────────────────────────────── */
+
+.login-btn {
+  background-color: var(--login-accent) !important;
+  border-color: var(--login-accent) !important;
+  border-radius: 8px !important;
+  height: 44px !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em;
+  transition: background-color 0.2s, transform 0.1s !important;
+}
+
+.login-btn:hover {
+  background-color: var(--login-accent-hover) !important;
+  border-color: var(--login-accent-hover) !important;
+  transform: translateY(-1px);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+
+.login-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--login-muted);
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--login-border);
+}
+
+/* ── Dark mode ────────────────────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --login-bg: #0f1117;
+    --login-card-bg: #1a1d27;
+    --login-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --login-border: #2d3142;
+    --login-text: #f0f0f0;
+    --login-muted: #9ca3af;
+  }
+
+  .login-card .ant-form-item-label > label {
+    color: #d1d5db;
+  }
+}

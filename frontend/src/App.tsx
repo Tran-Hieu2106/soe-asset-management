@@ -1,46 +1,35 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/auth/Login';
+import LoginPage from './pages/auth/LoginPage';
+import { useAuthStore } from './store/authStore'; // Import store mới
 
-// A simple wrapper to protect routes from unauthenticated users
+// Wrapper bảo vệ Route dùng Zustand
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('jwt_token');
-  if (!token) {
-    // If no token is found, kick them back to the login screen
+  // Lấy hàm check đăng nhập từ store
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  return children;
+  return <>{children}</>;
 };
 
-// Temporary placeholder for your dashboard
-const MainLayout = () => {
-  const username = localStorage.getItem('current_username');
+// Placeholder tạm thời cho Dashboard
+const DashboardPlaceholder = () => {
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt_token');
-    localStorage.removeItem('current_username');
+    logout(); // Xóa state trong store
     window.location.href = '/login';
   };
 
   return (
-    <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>SOE Asset Management System</h1>
-      <p>Welcome, <strong>{username}</strong>! You are successfully logged in.</p>
-      
-      <button 
-        onClick={handleLogout}
-        style={{ 
-          padding: '10px 20px', 
-          backgroundColor: '#ff4d4f', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginTop: '20px'
-        }}
-      >
-        Logout
-      </button>
+    <div style={{ padding: '50px', textAlign: 'center' }}>
+      <h1>Dashboard</h1>
+      <p>Chào mừng <strong>{user?.fullName || user?.username}</strong>!</p>
+      <p>Quyền của bạn: {user?.roles.join(', ')}</p>
+      <button onClick={handleLogout}>Đăng xuất</button>
     </div>
   );
 };
@@ -49,18 +38,20 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Public Route */}
-        <Route path="/login" element={<Login />} />
-
-        {/* Protected Routes - Anything matching "/*" will hit MainLayout */}
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* Protected Routes */}
         <Route 
-          path="/*" 
+          path="/dashboard" 
           element={
             <ProtectedRoute>
-              <MainLayout />
+              <DashboardPlaceholder />
             </ProtectedRoute>
           } 
         />
+        
+        {/* Tự động chuyển hướng / về /dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );

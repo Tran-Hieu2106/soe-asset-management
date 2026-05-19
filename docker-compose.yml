@@ -6,9 +6,9 @@ services:
     container_name: soe_postgres
     restart: always
     environment:
-      POSTGRES_DB: soe_asset_db
-      POSTGRES_USER: soe_admin
-      POSTGRES_PASSWORD: soe_password
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:

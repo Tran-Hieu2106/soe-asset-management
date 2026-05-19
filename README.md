@@ -33,28 +33,85 @@ soe-asset-management/
 - Java 17+, Maven 3.8+
 - Node.js 18+, npm 9+
 - Docker & Docker Compose
-- PostgreSQL (or run via Docker)
+- PostgreSQL run via Docker
 
 ### Run the full stack locally
+
+Start the database, backend, and frontend simultaneously.
+
 ```bash
 docker-compose up --build
 ```
-
+- Database    -> `http://localhost:5432`
 - Backend API -> `http://localhost:8080`
 - Frontend    -> `http://localhost:5173`
 
 ### Run individually
-```bash
-# Backend
-cd backend && ./mvnw spring-boot:run    
+Run the frontend and backend separately.
 
-# Frontend
-cd frontend && npm install && npm run dev
+#### Backend
+```bash
+# Database via Docker
+docker-compose up -d
+
+cd backend 
+./mvnw clean install -DskipTests # Install dependencies
+./mvnw spring-boot:run # Start the server
+```
+
+The backend will be available at `http://localhost:8080`.
+
+#### Frontend
+```bash
+cd frontend 
+npm install # Install dependencies
+npm run dev # Start the development server
+```
+
+The frontend will be available at `http://localhost:5173`.
+
+---
+
+## Testing
+
+### Backend (Spring Boot)
+The backend test suite is powered by JUnit 5, Mockito, and an in-memory **H2 Database**.
+
+```bash
+cd backend
+
+# Run the entire test suite
+./mvnw clean test
+
+# Run a specific test class (e.g., StockTransactionRepositoryTest)
+./mvnw test -Dtest=StockTransactionRepositoryTest
+```
+
+### Frontend (React + Vite)
+```bash
+cd frontend
+
+# Run all UI unit tests
+npm run test
+
+# Run tests in watch mode (for active development)
+npm run test:watch
 ```
 
 ---
 
-## Key Docs
+### API Documentation & Testing
+
+#### Swagger UI
+
+Once the Spring Boot backend is running, access the auto-generated API documentation at:
+`http://localhost:8080/swagger-ui/index.html`
+
+**Authentication:** To test secured endpoints directly in the browser, click the **Authorize** padlock button at the top of the Swagger UI and paste your JWT token. Swagger will automatically inject the `Authorization: Bearer <token>` header into all requests.
+
+---
+
+# Documents
 
 | Document | Location | Owner |
 |----------|----------|-------|

@@ -15,7 +15,10 @@ import vn.edu.hust.soict.soe.assetmanagement.audit.dto.AuditLogDto;
 import vn.edu.hust.soict.soe.assetmanagement.audit.service.AuditLogService;
 import vn.edu.hust.soict.soe.assetmanagement.common.ApiResponse;
 import vn.edu.hust.soict.soe.assetmanagement.common.PageResponse;
-
+/**
+ * Audit log endpoints (RP-03).
+ * Handles GET /api/audit-logs for SYSTEM_ADMIN and FINANCE_AUDIT.
+ */
 @RestController
 @RequestMapping("/api/audit-logs")
 @RequiredArgsConstructor

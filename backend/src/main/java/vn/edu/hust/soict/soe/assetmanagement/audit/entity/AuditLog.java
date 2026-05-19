@@ -5,7 +5,10 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-
+/**
+ * Audit log entity — maps to the `audit_logs` table (RP-03).
+ * Immutable record of all system data changes across modules.
+ */
 @Entity
 @Table(name = "audit_logs")
 @Getter

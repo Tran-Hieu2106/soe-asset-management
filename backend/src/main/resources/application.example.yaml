@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: soe-asset-management
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+jwt:
+  # 256-bit Hex key
+  secret: your_256_bit_hex_key_here
+  # 8 hours expiration
+  expiration-ms: 28800000

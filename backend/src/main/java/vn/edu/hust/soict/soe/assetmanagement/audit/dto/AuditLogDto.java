@@ -6,7 +6,9 @@ import vn.edu.hust.soict.soe.assetmanagement.audit.entity.AuditLog;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-
+/**
+ * Response body for audit log queries (RP-03).
+ */
 @Getter
 @Builder
 public class AuditLogDto {

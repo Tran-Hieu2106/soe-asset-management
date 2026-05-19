@@ -8,7 +8,10 @@ import org.springframework.stereotype.Repository;
 import vn.edu.hust.soict.soe.assetmanagement.audit.entity.AuditLog;
 
 import java.util.UUID;
-
+/**
+ * Audit log repository (RP-03).
+ * Provides read-only search capabilities for the audit trail.
+ */
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
 
