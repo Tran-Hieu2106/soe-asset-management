@@ -19,10 +19,10 @@ import java.util.List;
 import java.util.UUID;
 /**
  * Fixed asset endpoints.
- * Handles GET, POST, PATCH for /api/v1/fixed-assets.
+ * Handles GET, POST, PUT for /api/v1/assets.
  */
 @RestController
-@RequestMapping("/api/v1/fixed-assets")
+@RequestMapping("/api/assets")
 @Tag(name = "Fixed Assets", description = "Fixed Asset Management Module (FA-01 -> FA-04)")
 public class FixedAssetController {
 

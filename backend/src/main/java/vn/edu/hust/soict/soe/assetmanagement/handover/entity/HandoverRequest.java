@@ -21,7 +21,7 @@ import java.util.UUID;
 public class HandoverRequest extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.UUID) // auto generate
     private UUID id;
 
     @Column(name = "request_code", nullable = false, unique = true)

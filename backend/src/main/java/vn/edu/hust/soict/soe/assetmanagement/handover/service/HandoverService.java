@@ -150,7 +150,8 @@ public class HandoverService {
         }
     }
 
+    // match the AuditLogService.Log() in audit/service/AuditLogService.java
     private void logAudit(String action, HandoverRequest request, String oldJson) {
         auditLogService.log("HANDOVER", action, request.getId().toString(), request.getRequestCode(), oldJson, toJson(request), "Handover " + action);
     }
-}
+} 
