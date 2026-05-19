@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 /**
  * Fixed asset endpoints.
- * Handles GET, POST, PATCH for /api/assets.
+ * Handles GET, POST, PUT for /api/assets.
  */
 @RestController
 @RequestMapping("/api/assets")
