@@ -18,6 +18,7 @@ import vn.edu.hust.soict.soe.assetmanagement.audit.repository.AuditLogRepository
 import vn.edu.hust.soict.soe.assetmanagement.user.entity.User;
 
 import java.util.UUID;
+
 /**
  * Audit log service (RP-03).
  * Provides the centralized log() method used by all other modules.
@@ -39,8 +40,10 @@ public class AuditLogService {
     }
     
     /**
-     * Write an audit log entry. This method should be called within the same transaction as the business logic 
-     * so if the transaction rolls back, the log will not be saved either, ensuring consistency between logs and data state.
+     * Write an audit log entry. 
+     * Uses Propagation.REQUIRED: it joins the existing transaction of the calling service 
+     * (e.g., FixedAssetService). If the main transaction fails and rolls back, the log 
+     * rolls back too, preventing "phantom" logs of failed actions.
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public void log(String module, String action, String recordId, String recordCode, 
@@ -49,7 +52,7 @@ public class AuditLogService {
         String username = "system";
         UUID userId = null;
 
-        // Get current user info from security context
+        // 1. Extract current user from Spring Security Context
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User) {
             User currentUser = (User) auth.getPrincipal();
@@ -57,18 +60,24 @@ public class AuditLogService {
             userId = currentUser.getId();
         }
 
-        // Get client IP address from request context
+        // 2. Extract Client IP securely
         String ipAddress = "unknown";
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
             ipAddress = request.getHeader("X-Forwarded-For");
-            if (ipAddress == null || ipAddress.isEmpty()) {
+            
+            // FIX: Proxies append IPs with commas (e.g., "client_ip, proxy_ip"). We only want the first one.
+            if (ipAddress != null && ipAddress.contains(",")) {
+                ipAddress = ipAddress.split(",")[0].trim();
+            }
+            
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
                 ipAddress = request.getRemoteAddr();
             }
         }
 
-        // Build and save the audit log entry
+        // 3. Build and save
         AuditLog auditLog = AuditLog.builder()
                 .module(module)
                 .action(action)
@@ -82,10 +91,7 @@ public class AuditLogService {
                 .description(description)
                 .build();
          
-        if (auditLog != null) {
-            auditLogRepository.save(auditLog);
-            }
+        auditLogRepository.save(auditLog);
         log.info("Audit log written: [{}] {} - {}", module, action, description);
     }
-
 }

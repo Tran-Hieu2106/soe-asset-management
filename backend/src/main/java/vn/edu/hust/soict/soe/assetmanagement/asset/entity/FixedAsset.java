@@ -1,18 +1,20 @@
 package vn.edu.hust.soict.soe.assetmanagement.asset.entity;
 
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
+import vn.edu.hust.soict.soe.assetmanagement.common.BaseEntity; // IMPORTED BASE ENTITY
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 /**
  * Fixed asset entity — maps to the `assets` table.
- * Represents physical equipment including technical specs and financial values.
+ * Refactored to extend BaseEntity to inherit audit fields (Rule 2).
  */
 @Entity
 @Table(name = "assets")
-public class FixedAsset {
+public class FixedAsset extends BaseEntity { // EXTENDS BaseEntity
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,7 +38,6 @@ public class FixedAsset {
     private String serialNumber;
 
     private String manufacturer;
-    
     private String model;
 
     @Column(name = "country_of_origin", length = 100)
@@ -103,261 +104,65 @@ public class FixedAsset {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_by", nullable = false, length = 100)
-    private String createdBy;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getAssetCode() {
-        return assetCode;
-    }
-
-    public void setAssetCode(String assetCode) {
-        this.assetCode = assetCode;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Integer getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Integer categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public UUID getManagingUnitId() {
-        return managingUnitId;
-    }
-
-    public void setManagingUnitId(UUID managingUnitId) {
-        this.managingUnitId = managingUnitId;
-    }
-
-    public String getSerialNumber() {
-        return serialNumber;
-    }
-
-    public void setSerialNumber(String serialNumber) {
-        this.serialNumber = serialNumber;
-    }
-
-    public String getManufacturer() {
-        return manufacturer;
-    }
-
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public String getCountryOfOrigin() {
-        return countryOfOrigin;
-    }
-
-    public void setCountryOfOrigin(String countryOfOrigin) {
-        this.countryOfOrigin = countryOfOrigin;
-    }
-
-    public String getTechnicalSpecs() {
-        return technicalSpecs;
-    }
-
-    public void setTechnicalSpecs(String technicalSpecs) {
-        this.technicalSpecs = technicalSpecs;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public BigDecimal getOriginalCost() {
-        return originalCost;
-    }
-
-    public void setOriginalCost(BigDecimal originalCost) {
-        this.originalCost = originalCost;
-    }
-
-    public LocalDate getAcquisitionDate() {
-        return acquisitionDate;
-    }
-
-    public void setAcquisitionDate(LocalDate acquisitionDate) {
-        this.acquisitionDate = acquisitionDate;
-    }
-
-    public String getFundingSource() {
-        return fundingSource;
-    }
-
-    public void setFundingSource(String fundingSource) {
-        this.fundingSource = fundingSource;
-    }
-
-    public Integer getUsefulLifeYears() {
-        return usefulLifeYears;
-    }
-
-    public void setUsefulLifeYears(Integer usefulLifeYears) {
-        this.usefulLifeYears = usefulLifeYears;
-    }
-
-    public BigDecimal getSalvageValue() {
-        return salvageValue;
-    }
-
-    public void setSalvageValue(BigDecimal salvageValue) {
-        this.salvageValue = salvageValue;
-    }
-
-    public String getDepreciationMethod() {
-        return depreciationMethod;
-    }
-
-    public void setDepreciationMethod(String depreciationMethod) {
-        this.depreciationMethod = depreciationMethod;
-    }
-
-    public BigDecimal getAccumulatedDepreciation() {
-        return accumulatedDepreciation;
-    }
-
-    public void setAccumulatedDepreciation(BigDecimal accumulatedDepreciation) {
-        this.accumulatedDepreciation = accumulatedDepreciation;
-    }
-
-    public BigDecimal getNetBookValue() {
-        return netBookValue;
-    }
-
-    public void setNetBookValue(BigDecimal netBookValue) {
-        this.netBookValue = netBookValue;
-    }
-
-    public LocalDate getDepreciationStartDate() {
-        return depreciationStartDate;
-    }
-
-    public void setDepreciationStartDate(LocalDate depreciationStartDate) {
-        this.depreciationStartDate = depreciationStartDate;
-    }
-
-    public LocalDate getDepreciationEndDate() {
-        return depreciationEndDate;
-    }
-
-    public void setDepreciationEndDate(LocalDate depreciationEndDate) {
-        this.depreciationEndDate = depreciationEndDate;
-    }
-
-    public BigDecimal getAnnualDepreciationRate() {
-        return annualDepreciationRate;
-    }
-
-    public void setAnnualDepreciationRate(BigDecimal annualDepreciationRate) {
-        this.annualDepreciationRate = annualDepreciationRate;
-    }
-
-    public AssetStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(AssetStatus status) {
-        this.status = status;
-    }
-
-    public String getStatusReason() {
-        return statusReason;
-    }
-
-    public void setStatusReason(String statusReason) {
-        this.statusReason = statusReason;
-    }
-
-    public LocalDateTime getStatusChangedAt() {
-        return statusChangedAt;
-    }
-
-    public void setStatusChangedAt(LocalDateTime statusChangedAt) {
-        this.statusChangedAt = statusChangedAt;
-    }
-
-    public String getStatusChangedBy() {
-        return statusChangedBy;
-    }
-
-    public void setStatusChangedBy(String statusChangedBy) {
-        this.statusChangedBy = statusChangedBy;
-    }
-
-    public String getPurchaseDocumentRef() {
-        return purchaseDocumentRef;
-    }
-
-    public void setPurchaseDocumentRef(String purchaseDocumentRef) {
-        this.purchaseDocumentRef = purchaseDocumentRef;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
+    // NOTE: createdAt, updatedAt, and createdBy were removed from here 
+    // because they are now safely inherited from BaseEntity!
+
+    // --- GETTERS AND SETTERS ---
+    
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public String getAssetCode() { return assetCode; }
+    public void setAssetCode(String assetCode) { this.assetCode = assetCode; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Integer getCategoryId() { return categoryId; }
+    public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+    public UUID getManagingUnitId() { return managingUnitId; }
+    public void setManagingUnitId(UUID managingUnitId) { this.managingUnitId = managingUnitId; }
+    public String getSerialNumber() { return serialNumber; }
+    public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
+    public String getManufacturer() { return manufacturer; }
+    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
+    public String getModel() { return model; }
+    public void setModel(String model) { this.model = model; }
+    public String getCountryOfOrigin() { return countryOfOrigin; }
+    public void setCountryOfOrigin(String countryOfOrigin) { this.countryOfOrigin = countryOfOrigin; }
+    public String getTechnicalSpecs() { return technicalSpecs; }
+    public void setTechnicalSpecs(String technicalSpecs) { this.technicalSpecs = technicalSpecs; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+    public BigDecimal getOriginalCost() { return originalCost; }
+    public void setOriginalCost(BigDecimal originalCost) { this.originalCost = originalCost; }
+    public LocalDate getAcquisitionDate() { return acquisitionDate; }
+    public void setAcquisitionDate(LocalDate acquisitionDate) { this.acquisitionDate = acquisitionDate; }
+    public String getFundingSource() { return fundingSource; }
+    public void setFundingSource(String fundingSource) { this.fundingSource = fundingSource; }
+    public Integer getUsefulLifeYears() { return usefulLifeYears; }
+    public void setUsefulLifeYears(Integer usefulLifeYears) { this.usefulLifeYears = usefulLifeYears; }
+    public BigDecimal getSalvageValue() { return salvageValue; }
+    public void setSalvageValue(BigDecimal salvageValue) { this.salvageValue = salvageValue; }
+    public String getDepreciationMethod() { return depreciationMethod; }
+    public void setDepreciationMethod(String depreciationMethod) { this.depreciationMethod = depreciationMethod; }
+    public BigDecimal getAccumulatedDepreciation() { return accumulatedDepreciation; }
+    public void setAccumulatedDepreciation(BigDecimal accumulatedDepreciation) { this.accumulatedDepreciation = accumulatedDepreciation; }
+    public BigDecimal getNetBookValue() { return netBookValue; }
+    public void setNetBookValue(BigDecimal netBookValue) { this.netBookValue = netBookValue; }
+    public LocalDate getDepreciationStartDate() { return depreciationStartDate; }
+    public void setDepreciationStartDate(LocalDate depreciationStartDate) { this.depreciationStartDate = depreciationStartDate; }
+    public LocalDate getDepreciationEndDate() { return depreciationEndDate; }
+    public void setDepreciationEndDate(LocalDate depreciationEndDate) { this.depreciationEndDate = depreciationEndDate; }
+    public BigDecimal getAnnualDepreciationRate() { return annualDepreciationRate; }
+    public void setAnnualDepreciationRate(BigDecimal annualDepreciationRate) { this.annualDepreciationRate = annualDepreciationRate; }
+    public AssetStatus getStatus() { return status; }
+    public void setStatus(AssetStatus status) { this.status = status; }
+    public String getStatusReason() { return statusReason; }
+    public void setStatusReason(String statusReason) { this.statusReason = statusReason; }
+    public LocalDateTime getStatusChangedAt() { return statusChangedAt; }
+    public void setStatusChangedAt(LocalDateTime statusChangedAt) { this.statusChangedAt = statusChangedAt; }
+    public String getStatusChangedBy() { return statusChangedBy; }
+    public void setStatusChangedBy(String statusChangedBy) { this.statusChangedBy = statusChangedBy; }
+    public String getPurchaseDocumentRef() { return purchaseDocumentRef; }
+    public void setPurchaseDocumentRef(String purchaseDocumentRef) { this.purchaseDocumentRef = purchaseDocumentRef; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

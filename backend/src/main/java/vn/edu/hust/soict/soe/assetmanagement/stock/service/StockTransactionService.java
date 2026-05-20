@@ -1,9 +1,13 @@
 package vn.edu.hust.soict.soe.assetmanagement.stock.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.hust.soict.soe.assetmanagement.audit.service.AuditLogService;
+import vn.edu.hust.soict.soe.assetmanagement.exception.BusinessRuleException;
+import vn.edu.hust.soict.soe.assetmanagement.exception.ResourceNotFoundException;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.IssueRequest;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.ReceiptRequest;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.StockTransactionDto;
@@ -11,8 +15,6 @@ import vn.edu.hust.soict.soe.assetmanagement.stock.entity.Material;
 import vn.edu.hust.soict.soe.assetmanagement.stock.entity.StorageLocation;
 import vn.edu.hust.soict.soe.assetmanagement.stock.entity.StockTransaction;
 import vn.edu.hust.soict.soe.assetmanagement.stock.entity.TransactionType;
-import vn.edu.hust.soict.soe.assetmanagement.stock.exception.InsufficientStockException;
-import vn.edu.hust.soict.soe.assetmanagement.stock.exception.ResourceNotFoundException;
 import vn.edu.hust.soict.soe.assetmanagement.stock.repository.MaterialRepository;
 import vn.edu.hust.soict.soe.assetmanagement.stock.repository.StorageLocationRepository;
 import vn.edu.hust.soict.soe.assetmanagement.stock.repository.StockTransactionRepository;
@@ -36,6 +38,8 @@ public class StockTransactionService {
     private final StockTransactionRepository transactionRepository;
     private final MaterialRepository         materialRepository;
     private final StorageLocationRepository  locationRepository;
+    private final AuditLogService            auditLogService;
+    private final ObjectMapper               objectMapper;
 
     // ── CS-02: RECEIPT ────────────────────────────────────────────────────
     public StockTransactionDto createReceipt(ReceiptRequest req, String createdBy) {
@@ -60,7 +64,12 @@ public class StockTransactionService {
                 .createdBy(createdBy)
                 .build();
 
-        return toDto(transactionRepository.save(tx));
+        StockTransaction savedTx = transactionRepository.save(tx);
+        
+        auditLogService.log("STOCK", "RECEIPT", savedTx.getId().toString(), savedTx.getDocumentRef(), 
+                "{}", toJson(savedTx), "Recorded stock receipt for material: " + material.getMaterialCode());
+
+        return toDto(savedTx);
     }
 
     // ── CS-02 + CS-04: ISSUE ──────────────────────────────────────────────
@@ -77,15 +86,14 @@ public class StockTransactionService {
 
         BigDecimal finalUnitPrice = req.getUnitPrice() != null 
                             ? req.getUnitPrice() 
-                            : material.getUnitPrice(); // fallback to material's default price if not provided in request
+                            : material.getUnitPrice();
 
         if (available.compareTo(req.getQuantity()) < 0) {
-            log.warn("Insufficient stock — required: {}, available: {}",
-                    req.getQuantity(), available);
-            throw new InsufficientStockException(
+            log.warn("Insufficient stock — required: {}, available: {}", req.getQuantity(), available);
+            // Replaced local exception with global BusinessRuleException
+            throw new BusinessRuleException(
                     "Tồn kho không đủ cho vật tư '" + material.getMaterialCode()
-                    + "'. Cần: " + req.getQuantity() + ", Có: " + available,
-                    req.getQuantity(), available);
+                    + "'. Cần: " + req.getQuantity() + ", Có: " + available);
         }
 
         StockTransaction tx = StockTransaction.builder()
@@ -105,7 +113,12 @@ public class StockTransactionService {
                 .createdBy(createdBy)
                 .build();
 
-        return toDto(transactionRepository.save(tx));
+        StockTransaction savedTx = transactionRepository.save(tx);
+        
+        auditLogService.log("STOCK", "ISSUE", savedTx.getId().toString(), savedTx.getDocumentRef(), 
+                "{}", toJson(savedTx), "Recorded stock issue to department: " + req.getRequestingDepartmentId());
+
+        return toDto(savedTx);
     }
 
     // ── READ ──────────────────────────────────────────────────────────────
@@ -119,14 +132,21 @@ public class StockTransactionService {
     // ── HELPERS ───────────────────────────────────────────────────────────
     private Material findMaterialOrThrow(UUID id) {
         return materialRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Vật tư ID " + id + " không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vật tư ID " + id + " không tồn tại"));
     }
 
     private StorageLocation findLocationOrThrow(UUID id) {
         return locationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Kho ID " + id + " không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kho ID " + id + " không tồn tại"));
+    }
+    
+    private String toJson(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            log.error("JSON parse error", e);
+            return "{}";
+        }
     }
 
     public StockTransactionDto toDto(StockTransaction t) {

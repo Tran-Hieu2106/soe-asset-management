@@ -1,4 +1,4 @@
-package vn.edu.hust.soict.soe.assetmanagement.handover.service;
+/*package vn.edu.hust.soict.soe.assetmanagement.handover.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,3 +35,7 @@ public class HandoverDocumentService {
     }
       
 }
+*/
+
+// Dont need this anymore, already implemented in HandoverService
+

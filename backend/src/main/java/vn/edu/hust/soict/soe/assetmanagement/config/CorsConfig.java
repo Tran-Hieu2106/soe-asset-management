@@ -6,26 +6,23 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * CORS configuration.
+ * Global CORS configuration.
  * Allows the Vite frontend (localhost:5173) to call the Spring API (localhost:8080).
- *
- * In production, update allowedOrigins to the deployed frontend URL.
- * Never use "*" in production — it bypasses credential security.
+ * Merged logic from WebConfig.java to prevent Bean conflicts.
  */
-
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
-        registry.addMapping("/api/**")
+        registry.addMapping("/**") // Apply to ALL endpoints globally
                 .allowedOrigins(
-                        "http://localhost:5173",   // Vite dev server
-                        "http://localhost:3000"    // fallback if team uses CRA
+                        "http://localhost:5173",   // M4's Vite dev server
+                        "http://localhost:3000"    // Fallback if team uses Create React App
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept")
+                .allowCredentials(true) // Crucial for passing the JWT token via Authorization header
+                .maxAge(3600); // Cache the OPTIONS preflight response for 1 hour to speed up requests
     }
 }

@@ -6,7 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.hust.soict.soe.assetmanagement.common.ApiResponse;
+import vn.edu.hust.soict.soe.assetmanagement.common.PageResponse;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.CreateMaterialRequest;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.MaterialDto;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.UpdateMaterialRequest;
@@ -17,12 +21,7 @@ import java.util.UUID;
 
 /**
  * CS-01: Material catalogue REST API
- *
- * GET  /api/materials          — list (paginated, filterable by category)
- * GET  /api/materials/search   — search by name
- * GET  /api/materials/{id}     — get one
- * POST /api/materials          — add new
- * PUT  /api/materials/{id}     — update
+ * Refactored to use global ApiResponse, PageResponse, and RBAC security.
  */
 @RestController
 @RequestMapping("/api/materials")
@@ -32,40 +31,50 @@ public class MaterialController {
     private final MaterialService materialService;
 
     @GetMapping
-    public ResponseEntity<Page<MaterialDto>> getAll(
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'WAREHOUSE', 'APPROVING_AUTH', 'FINANCE_AUDIT')")
+    public ResponseEntity<ApiResponse<PageResponse<MaterialDto>>> getAll(
             @RequestParam(required = false) Integer categoryId,
             Pageable pageable) {
 
-        return ResponseEntity.ok(
-                categoryId != null
-                        ? materialService.getByCategory(categoryId, pageable)
-                        : materialService.getAll(pageable)
-        );
+        Page<MaterialDto> page = categoryId != null
+                ? materialService.getByCategory(categoryId, pageable)
+                : materialService.getAll(pageable);
+                
+        return ResponseEntity.ok(ApiResponse.success("Materials retrieved", PageResponse.of(page)));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<MaterialDto>> search(@RequestParam String keyword) {
-        return ResponseEntity.ok(materialService.search(keyword));
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'WAREHOUSE', 'APPROVING_AUTH', 'FINANCE_AUDIT')")
+    public ResponseEntity<ApiResponse<List<MaterialDto>>> search(@RequestParam String keyword) {
+        return ResponseEntity.ok(ApiResponse.success(materialService.search(keyword)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MaterialDto> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(materialService.getById(id));
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'WAREHOUSE', 'APPROVING_AUTH', 'FINANCE_AUDIT')")
+    public ResponseEntity<ApiResponse<MaterialDto>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(materialService.getById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<MaterialDto> create(@Valid @RequestBody CreateMaterialRequest req) {
-        // TODO: replace "system" with username from JWT SecurityContext
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(materialService.create(req, "system"));
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'WAREHOUSE')")
+    public ResponseEntity<ApiResponse<MaterialDto>> create(
+            @Valid @RequestBody CreateMaterialRequest req, 
+            Authentication authentication) {
+        
+        // Extracted username from security context instead of hardcoding "system"
+        MaterialDto created = materialService.create(req, authentication.getName());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Material created successfully", created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MaterialDto> update(
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'WAREHOUSE')")
+    public ResponseEntity<ApiResponse<MaterialDto>> update(
             @PathVariable UUID id,
-            @RequestBody UpdateMaterialRequest req) {
+            @Valid @RequestBody UpdateMaterialRequest req,
+            Authentication authentication) {
 
-        return ResponseEntity.ok(materialService.update(id, req));
+        MaterialDto updated = materialService.update(id, req, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success("Material updated successfully", updated));
     }
 }

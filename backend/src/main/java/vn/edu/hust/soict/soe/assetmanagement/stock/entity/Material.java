@@ -2,11 +2,9 @@ package vn.edu.hust.soict.soe.assetmanagement.stock.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import vn.edu.hust.soict.soe.assetmanagement.common.BaseEntity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -18,8 +16,12 @@ import java.util.UUID;
         @Index(name = "idx_materials_code",     columnList = "material_code"),
         @Index(name = "idx_materials_category", columnList = "category_id")
 })
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class Material {
+@Data 
+@NoArgsConstructor 
+@AllArgsConstructor 
+@Builder
+@EqualsAndHashCode(callSuper = true) // Important when extending BaseEntity
+public class Material extends BaseEntity {
 
     @Id
     private UUID id;
@@ -59,17 +61,6 @@ public class Material {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_by", nullable = false, length = 100)
-    private String createdBy;
 
     @PrePersist
     public void prePersist() {
