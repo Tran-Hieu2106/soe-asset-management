@@ -63,7 +63,9 @@ public class HandoverService {
                 .build();
 
         HandoverRequest savedRequest = handoverRepository.save(Objects.requireNonNull(request));
-        logAudit("CREATE", savedRequest, null);
+        
+        // Use "{}" for the initial state instead of null to match M2 standards
+        logAudit("CREATE", savedRequest, "{}");
 
         return HandoverDto.from(savedRequest, asset.getAssetCode(), asset.getName());
     }
@@ -85,8 +87,9 @@ public class HandoverService {
         request.setStatus(HandoverStatus.APPROVED);
         HandoverRequest updatedRequest = handoverRepository.save(request);
 
-        // M2 Integration execution
+        // M2 Integration execution - This hooks perfectly into Hai's system
         fixedAssetService.updateAssetStatus(request.getAssetId(), AssetStatus.TRANSFERRED, "Handover approved", approverUsername);
+        
         // Note: Hai needs to expose an updateManagingUnit(assetId, toUnitId) method in his FixedAssetService to complete the transfer.
 
         logAudit("APPROVE", updatedRequest, oldJson);
@@ -150,8 +153,17 @@ public class HandoverService {
         }
     }
 
-    // match the AuditLogService.Log() in audit/service/AuditLogService.java
+    // Matches the AuditLogService.log() seamlessly
     private void logAudit(String action, HandoverRequest request, String oldJson) {
-        auditLogService.log("HANDOVER", action, request.getId().toString(), request.getRequestCode(), oldJson, toJson(request), "Handover " + action);
+        String safeOldJson = (oldJson != null) ? oldJson : "{}";
+        auditLogService.log(
+            "HANDOVER", 
+            action, 
+            request.getId().toString(), 
+            request.getRequestCode(), 
+            safeOldJson, 
+            toJson(request), 
+            "Handover " + action
+        );
     }
-} 
+}

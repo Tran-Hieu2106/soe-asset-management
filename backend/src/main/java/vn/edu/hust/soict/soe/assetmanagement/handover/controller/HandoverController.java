@@ -42,7 +42,8 @@ public class HandoverController {
     }
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    // FIX: Aligned roles with SecurityConfig (SYSTEM_ADMIN, APPROVING_AUTH)
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'APPROVING_AUTH')")
     @Operation(summary = "Approve handover request", description = "Approves request and updates asset unit (M2 dependency)")
     public ResponseEntity<ApiResponse<HandoverDto>> approveRequest(
             @PathVariable UUID id,
@@ -53,14 +54,15 @@ public class HandoverController {
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    // FIX: Aligned roles with SecurityConfig (SYSTEM_ADMIN, APPROVING_AUTH)
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'APPROVING_AUTH')")
     @Operation(summary = "Reject handover request", description = "Rejects a pending request with a reason")
     public ResponseEntity<ApiResponse<HandoverDto>> rejectRequest(
             @PathVariable UUID id,
             @RequestBody(required = false) Map<String, String> payload,
             Authentication authentication) {
         
-        String reason = (payload != null) ? payload.get("reason") : "No reason provided";
+        String reason = (payload != null && payload.containsKey("reason")) ? payload.get("reason") : "No reason provided";
         HandoverDto dto = handoverService.rejectRequest(id, authentication.getName(), reason);
         return ResponseEntity.ok(ApiResponse.success("Handover request rejected successfully.", dto));
     }
@@ -68,7 +70,6 @@ public class HandoverController {
     @GetMapping("/{id}/document")
     @Operation(summary = "Get Handover Document", description = "Returns enriched DTO for printing (HL-03)")
     public ResponseEntity<ApiResponse<HandoverDto>> getDocument(@PathVariable UUID id) {
-        
         return ResponseEntity.ok(ApiResponse.success("Document data retrieved.", 
                 handoverService.getDocumentData(id)));
     }

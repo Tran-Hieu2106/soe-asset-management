@@ -1,3 +1,4 @@
+/*
 package vn.edu.hust.soict.soe.assetmanagement.config;
 
 import org.springframework.context.annotation.Configuration;
@@ -18,3 +19,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .maxAge(3600); // Cache the preflight response for 1 hour
     }
 }
+*/
+/*
+This file is not needed as CORS is configured in CorsConfig.java
+Already merged into CorsConfig.java
+should not configure CORS 2 times in both files */

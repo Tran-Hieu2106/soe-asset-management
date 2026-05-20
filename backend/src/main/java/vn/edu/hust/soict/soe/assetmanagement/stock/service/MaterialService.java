@@ -1,19 +1,20 @@
 package vn.edu.hust.soict.soe.assetmanagement.stock.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.lang.NonNull;
+import vn.edu.hust.soict.soe.assetmanagement.audit.service.AuditLogService;
+import vn.edu.hust.soict.soe.assetmanagement.exception.BusinessRuleException;
+import vn.edu.hust.soict.soe.assetmanagement.exception.ResourceNotFoundException;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.CreateMaterialRequest;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.MaterialDto;
 import vn.edu.hust.soict.soe.assetmanagement.stock.dto.UpdateMaterialRequest;
 import vn.edu.hust.soict.soe.assetmanagement.stock.entity.Material;
 import vn.edu.hust.soict.soe.assetmanagement.stock.entity.MaterialCategory;
-import vn.edu.hust.soict.soe.assetmanagement.stock.exception.DuplicateMaterialCodeException;
-import vn.edu.hust.soict.soe.assetmanagement.stock.exception.ResourceNotFoundException;
 import vn.edu.hust.soict.soe.assetmanagement.stock.repository.MaterialCategoryRepository;
 import vn.edu.hust.soict.soe.assetmanagement.stock.repository.MaterialRepository;
 
@@ -32,14 +33,16 @@ public class MaterialService {
 
     private final MaterialRepository         materialRepository;
     private final MaterialCategoryRepository categoryRepository;
+    private final AuditLogService            auditLogService;
+    private final ObjectMapper               objectMapper;
 
     // ── CREATE ────────────────────────────────────────────────────────────
     public MaterialDto create(CreateMaterialRequest req, String createdBy) {
         log.info("Creating material: {}", req.getMaterialCode());
 
         if (materialRepository.existsByMaterialCode(req.getMaterialCode())) {
-            throw new DuplicateMaterialCodeException(
-                    "Mã vật tư '" + req.getMaterialCode() + "' đã tồn tại");
+            // Replaced local exception with global BusinessRuleException
+            throw new BusinessRuleException("Mã vật tư '" + req.getMaterialCode() + "' đã tồn tại");
         }
 
         MaterialCategory category = findCategoryOrThrow(req.getCategoryId());
@@ -56,10 +59,15 @@ public class MaterialService {
                 .minimumStock(req.getMinimumStock())
                 .notes(req.getNotes())
                 .isActive(true)
-                .createdBy(createdBy)
                 .build();
+                
+        // BaseEntity takes care of createdBy automatically via AuditConfig
+        Material saved = materialRepository.save(m);
+        
+        auditLogService.log("STOCK", "CREATE_MATERIAL", saved.getId().toString(), saved.getMaterialCode(), 
+                "{}", toJson(saved), "Registered new material");
 
-        return toDto(materialRepository.save(m));
+        return toDto(saved);
     }
 
     // ── READ ──────────────────────────────────────────────────────────────
@@ -87,9 +95,10 @@ public class MaterialService {
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────
-    public MaterialDto update(UUID id, UpdateMaterialRequest req) {
+    public MaterialDto update(UUID id, UpdateMaterialRequest req, String updatedBy) {
         log.info("Updating material ID: {}", id);
         Material m = findMaterialOrThrow(id);
+        String oldJson = toJson(m);
 
         if (req.getName()          != null) m.setName(req.getName());
         if (req.getUnitOfMeasure() != null) m.setUnitOfMeasure(req.getUnitOfMeasure());
@@ -102,20 +111,32 @@ public class MaterialService {
         if (req.getNotes()         != null) m.setNotes(req.getNotes());
         if (req.getCategoryId()    != null) m.setCategory(findCategoryOrThrow(req.getCategoryId()));
 
-        return toDto(materialRepository.save(m));
+        Material updated = materialRepository.save(m);
+        
+        auditLogService.log("STOCK", "UPDATE_MATERIAL", updated.getId().toString(), updated.getMaterialCode(), 
+                oldJson, toJson(updated), "Updated material properties");
+
+        return toDto(updated);
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────
     private Material findMaterialOrThrow(UUID id) {
         return materialRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Vật tư ID " + id + " không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vật tư ID " + id + " không tồn tại"));
     }
 
     private MaterialCategory findCategoryOrThrow(Integer id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Danh mục ID " + id + " không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Danh mục ID " + id + " không tồn tại"));
+    }
+    
+    private String toJson(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            log.error("JSON parse error", e);
+            return "{}";
+        }
     }
 
     public MaterialDto toDto(Material m) {

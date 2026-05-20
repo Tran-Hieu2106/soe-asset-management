@@ -2,9 +2,8 @@ package vn.edu.hust.soict.soe.assetmanagement.stock.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import vn.edu.hust.soict.soe.assetmanagement.common.BaseEntity;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -12,8 +11,12 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "storage_locations")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
-public class StorageLocation {
+@Data 
+@NoArgsConstructor 
+@AllArgsConstructor 
+@Builder
+@EqualsAndHashCode(callSuper = true)
+public class StorageLocation extends BaseEntity { // Extends BaseEntity for common fields
 
     @Id
     private UUID id;
@@ -31,10 +34,6 @@ public class StorageLocation {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
