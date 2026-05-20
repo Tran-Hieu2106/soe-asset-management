@@ -139,9 +139,9 @@ INSERT INTO materials (
 -- Test credentials summary
 -- All passwords: Password@123
 -- ============================================================
--- admin          → R-01 SYSTEM_ADMIN    → user/config management, full audit access
--- asset.manager  → R-02 ASSET_MANAGER   → create/manage assets, initiate handovers
--- warehouse      → R-03 WAREHOUSE       → stock catalogue, receipts, issues
--- approver       → R-04 APPROVING_AUTH  → approve stock, handovers, liquidations
--- finance.audit  → R-05 FINANCE_AUDIT   → read-only, reports, audit trail
+-- admin          -> R-01 SYSTEM_ADMIN    -> user/config management, full audit access
+-- asset.manager  -> R-02 ASSET_MANAGER   -> create/manage assets, initiate handovers
+-- warehouse      -> R-03 WAREHOUSE       -> stock catalogue, receipts, issues
+-- approver       -> R-04 APPROVING_AUTH  -> approve stock, handovers, liquidations
+-- finance.audit  -> R-05 FINANCE_AUDIT   -> read-only, reports, audit trail
 -- ============================================================
