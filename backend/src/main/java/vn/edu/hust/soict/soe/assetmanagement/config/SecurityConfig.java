@@ -54,6 +54,9 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
+                // Actuator health check — used by Docker health check, no auth needed
+                .requestMatchers("/actuator/health").permitAll()
+
                 // Swagger UI — open in dev (restrict in production)
                 .requestMatchers(
                     "/swagger-ui/**",

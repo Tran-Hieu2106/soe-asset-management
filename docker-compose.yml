@@ -7,8 +7,8 @@ services:
     restart: always
     environment:
       POSTGRES_DB: soe_asset_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password123
+      POSTGRES_USER: soe_admin
+      POSTGRES_PASSWORD: soe_password
     ports:
       - "5432:5432"
     volumes:

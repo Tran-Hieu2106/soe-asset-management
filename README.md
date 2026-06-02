@@ -55,7 +55,7 @@ Run the frontend and backend separately.
 docker-compose up -d
 
 cd backend 
-./mvnw clean install -DskipTests # Install dependencies
+./mvnw clean install # Install dependencies
 ./mvnw spring-boot:run # Start the server
 ```
 
