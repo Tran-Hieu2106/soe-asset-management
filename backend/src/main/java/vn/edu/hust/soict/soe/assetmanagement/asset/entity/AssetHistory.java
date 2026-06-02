@@ -1,32 +1,44 @@
 package vn.edu.hust.soict.soe.assetmanagement.asset.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 /**
- * Asset history entity — maps to the `asset_history` table.
- * Append-only ledger tracking all lifecycle events and status changes for an asset.
- * Different from audit logs, this is focused on asset-specific events.
+ * ==============================================================================
+ * ENTITY: AssetHistory
+ * PURPOSE: Maps to `asset_history` table. Fulfills requirement FA-04.
+ * RULE CHECK: DOES NOT extend BaseEntity. Per database-schema.md, this is an 
+ * append-only ledger and must NOT have an updated_at column.
+ * ==============================================================================
  */
 @Entity
 @Table(name = "asset_history")
+@Getter // Lombok annotation to generate getters for all fields
+@Setter // Lombok annotation to generate setters for all fields
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AssetHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "asset_id", nullable = false)
     private UUID assetId;
 
     @Column(name = "event_type", nullable = false, length = 50)
-    private String eventType; // e.g., CREATED, STATUS_CHANGED, DEPRECIATION_POSTED
+    private String eventType;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "old_value", columnDefinition = "TEXT")
-    private String oldValue; 
+    private String oldValue;
 
     @Column(name = "new_value", columnDefinition = "TEXT")
     private String newValue;
@@ -34,71 +46,8 @@ public class AssetHistory {
     @Column(name = "performed_by", nullable = false, length = 100)
     private String performedBy;
 
-    @Column(name = "performed_at", nullable = false)
-    private LocalDateTime performedAt;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getAssetId() {
-        return assetId;
-    }
-
-    public void setAssetId(UUID assetId) {
-        this.assetId = assetId;
-    }
-
-    public String getEventType() {
-        return eventType;
-    }
-
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getOldValue() {
-        return oldValue;
-    }
-
-    public void setOldValue(String oldValue) {
-        this.oldValue = oldValue;
-    }
-
-    public String getNewValue() {
-        return newValue;
-    }
-
-    public void setNewValue(String newValue) {
-        this.newValue = newValue;
-    }
-
-    public String getPerformedBy() {
-        return performedBy;
-    }
-
-    public void setPerformedBy(String performedBy) {
-        this.performedBy = performedBy;
-    }
-
-    public LocalDateTime getPerformedAt() {
-        return performedAt;
-    }
-
-    public void setPerformedAt(LocalDateTime performedAt) {
-        this.performedAt = performedAt;
-    }
-
+    // Explicitly tracked creation time. No update time allowed.
+    @Column(name = "performed_at", nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime performedAt = LocalDateTime.now();
 }

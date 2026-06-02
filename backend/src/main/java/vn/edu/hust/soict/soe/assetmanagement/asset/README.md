@@ -1,143 +1,187 @@
 # Module 2 (M2): Fixed Asset Management
 
-## Overview
-The Fixed Asset Management module is the core registry for state-owned physical equipment and property. Based on the requirements defined in Milestone 1 (SRS), this module tracks the entire lifecycle of an asset from procurement to disposal. It fulfills four primary functional requirements:
-* **FA-01 (Asset Registration):** Digital profiling of physical assets, capturing technical specifications, geographic locations, and initial financial valuations.
-* **FA-02 (Depreciation Calculation):** Automated calculation of accumulated depreciation and net book value complying with Vietnamese Circular 45/2013/TT-BTC (supporting both Straight-Line and Declining Balance methods).
-* **FA-03 (Operational Status Tracking):** Management of asset states (`IN_USE`, `MAINTENANCE`, `TRANSFERRED`, `LIQUIDATED`).
-* **FA-04 (Asset Lifecycle History):** Maintenance of an immutable, append-only ledger that records every status change and lifecycle event specific to the asset.
+## 1. Module Overview
+The **Fixed Asset Management** module is the central registry for state-owned physical equipment and property. It acts as the single source of truth for the digital lifecycle of physical assets, covering procurement registration, automated financial depreciation calculations, operational status lifecycle management, and immutable audit trailing.
+
+It is specifically designed to fulfill the functional requirements defined in the Milestone 1 Software Requirements Specification (SRS):
+* **FA-01 (Asset Registration):** Profiles assets with deep technical configurations and initial financial data.
+* **FA-02 (Depreciation Calculation):** A financial calculation engine complying with Vietnamese Circular 45/2013/TT-BTC.
+* **FA-03 (Operational Status):** Tracks asset states (e.g., `IN_USE`, `TRANSFERRED`, `LIQUIDATED`) to reflect real-world availability.
+* **FA-04 (Lifecycle Ledger):** Provides an immutable, chronological history of asset-specific events.
 
 ---
 
-## Detailed File Specifications
+## 2. Detailed File Specifications (Class & Attribute Dictionary)
 
-### 1. Enums
-#### `enums/AssetStatus.java`
-* **Purpose:** Defines the strict set of lifecycle states an asset can occupy.
-* **Values:**
-    * `IN_USE`: Asset is currently actively deployed at a managing unit.
-    * `MAINTENANCE`: Asset is undergoing repair and temporarily out of service.
-    * `IDLE`: Asset is functioning but not currently assigned or used.
-    * `TRANSFERRED`: Asset has been successfully handed over to a new unit (Hooked by M4 Handover).
-    * `LIQUIDATED`: Asset has been disposed of via auction, scrap, or donation (Hooked by M4 Liquidation).
+### 2.1. Enums
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus`
+**Purpose:** Defines the strict, permitted lifecycle states an asset can occupy. This guarantees data consistency and drives cross-module logic (e.g., Handover checks).
+* **Attributes (Values):**
+    * `IN_USE`: The asset is currently active and deployed at its assigned managing unit.
+    * `MAINTENANCE`: The asset is temporarily out of service undergoing repairs or maintenance.
+    * `IDLE`: The asset is functional but not currently assigned to active duties.
+    * `TRANSFERRED`: The asset has been formally handed over to a new managing unit (this state is primarily triggered programmatically by the M4 Handover module).
+    * `LIQUIDATED`: The asset has reached end-of-life and has been disposed of (triggered by the M4 Liquidation module).
 
 ### 2.2. Entities
-#### `entity/FixedAsset.java`
-* **Purpose:** The central JPA Entity mapping to the `assets` table. It holds all static and calculated data for an asset. It extends `BaseEntity` to inherit standard audit fields (`createdAt`, `updatedAt`, `createdBy`).
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.entity.FixedAsset`
+**Purpose:** The core JPA Entity mapping to the `assets` database table. It holds all static descriptions and dynamically calculated financial data for an asset. It extends `BaseEntity` to inherit standard system audit fields (`createdAt`, `updatedAt`, `createdBy`).
 * **Attributes:**
-    * `id (UUID)`: Primary key, auto-generated.
-    * `assetCode (String)`: Unique business identifier (e.g., `TSCD-2026-001`). Must be unique.
-    * `name (String)`: Human-readable asset name.
-    * `categoryId (Integer)`: Foreign key linking to the asset classification taxonomy (from M1/M3).
-    * `managingUnitId (UUID)`: Foreign key linking to the department currently holding/responsible for the asset.
-    * `serialNumber (String)`: Manufacturer's serial number.
-    * `manufacturer, model, countryOfOrigin (String)`: Standard technical hardware specifications.
-    * `technicalSpecs (String)`: Detailed text/JSON block describing hardware specs.
-    * `location (String)`: Physical location/room of the asset.
-    * `originalCost (BigDecimal)`: The initial purchase or acquisition cost (Financial FA-01).
-    * `acquisitionDate (LocalDate)`: Date the asset was officially acquired.
-    * `fundingSource (String)`: Budget source (e.g., "State Budget", "Enterprise Fund").
-    * `usefulLifeYears (Integer)`: Expected lifespan in years (Critical for FA-02 Depreciation).
-    * `salvageValue (BigDecimal)`: Estimated residual value at the end of its useful life.
-    * `depreciationMethod (String)`: `STRAIGHT_LINE` (default) or `DECLINING_BALANCE`.
-    * `accumulatedDepreciation (BigDecimal)`: Computed total value lost to date.
-    * `netBookValue (BigDecimal)`: Computed current worth (`originalCost` - `accumulatedDepreciation`).
-    * `status (AssetStatus)`: Current operational state mapped to the Enum.
-    * `statusReason (String)`: Contextual explanation for the current status.
-    * `statusChangedAt (LocalDateTime)`: Timestamp of the last status update.
-    * `statusChangedBy (String)`: Username who executed the last status update.
-    * `purchaseDocumentRef (String)`: Reference code to physical/digital procurement paperwork.
-    * `notes (String)`: General remarks.
+    * `id` (`UUID`): The primary key. Auto-generated by the database/JPA to prevent enumeration attacks.
+    * `assetCode` (`String`): The unique, human-readable business identifier (e.g., `TSCD-2026-001`).
+    * `name` (`String`): The descriptive name of the asset.
+    * `categoryId` (`Integer`): A foreign key linking to the asset classification taxonomy (defined in M1/M3).
+    * `managingUnitId` (`UUID`): A foreign key linking to the department currently holding and responsible for the asset. Handover (M4) modifies this.
+    * `serialNumber` (`String`): The manufacturer's unique serial number.
+    * `manufacturer` (`String`): The company that built the asset.
+    * `model` (`String`): The specific hardware model.
+    * `countryOfOrigin` (`String`): Where the asset was manufactured.
+    * `technicalSpecs` (`String`): Detailed text or JSON block describing complex hardware specifications.
+    * `location` (`String`): The specific physical room or building where the asset resides.
+    * `originalCost` (`BigDecimal`, 18,2): The initial purchase or acquisition cost in VND.
+    * `salvageValue` (`BigDecimal`, 18,2): The estimated residual value of the asset at the end of its useful life.
+    * `accumulatedDepreciation` (`BigDecimal`, 18,2): The computed total financial value lost to date.
+    * `netBookValue` (`BigDecimal`, 18,2): The computed current worth (`originalCost` - `accumulatedDepreciation`).
+    * `acquisitionDate` (`LocalDate`): The date the asset was officially acquired and entered the system.
+    * `usefulLifeYears` (`Integer`): The expected lifespan in years. Crucial for FA-02 Depreciation math.
+    * `depreciationMethod` (`String`): The calculation strategy. Defaults to `STRAIGHT_LINE`. Can be `DECLINING_BALANCE`.
+    * `status` (`AssetStatus`): The current operational state, mapped to the `AssetStatus` Enum.
+    * `notes` (`String`): General remarks or observations.
+* **Inherited Attributes (from `BaseEntity`):**
+    * `createdAt` (`LocalDateTime`): Timestamp of creation.
+    * `updatedAt` (`LocalDateTime`): Timestamp of last modification.
+    * `createdBy` (`String`): Username of the creator.
+* **Methods:**
+    * Standard getters and setters automatically generated by Lombok's `@Getter` and `@Setter` annotations.
+    * `builder()`: Builder pattern method automatically generated by Lombok's `@Builder`.
 
-#### `entity/AssetHistory.java`
-* **Purpose:** Maps to `asset_history`. An append-only ledger for the asset. **Does not** extend `BaseEntity` to preserve immutability rules.
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.entity.AssetHistory`
+**Purpose:** Maps to the `asset_history` database table. It acts as an append-only ledger tracking lifecycle events specifically for an asset (FA-04). **It explicitly DOES NOT extend `BaseEntity`** because the database schema demands an append-only structure with no `updated_at` column.
 * **Attributes:**
-    * `id (UUID)`: Primary key.
-    * `assetId (UUID)`: Reference to the parent `FixedAsset`.
-    * `eventType (String)`: The action performed (e.g., `CREATED`, `STATUS_CHANGED`).
-    * `description (String)`: Human-readable explanation.
-    * `oldValue, newValue (String)`: State changes (usually JSON or stringified values).
-    * `performedBy (String)`: The username of the actor.
-    * `performedAt (LocalDateTime)`: Exact timestamp of the event.
-
-### 3. Data Transfer Objects (DTOs)
-#### `dto/FixedAssetDTO.java`
-* **Purpose:** Transport object for incoming requests and outgoing responses to prevent exposing JPA proxy objects or sensitive internal database columns.
-* **Attributes:** Mirrors `FixedAsset.java` but applies `jakarta.validation` annotations (`@NotBlank`, `@NotNull`, `@DecimalMin`, `@PastOrPresent`) to enforce data integrity at the Controller boundary.
-
-#### `dto/AssetHistoryDTO.java`
-* **Purpose:** Safe transport representation of `AssetHistory` records for the frontend.
-
-### 4. Repositories
-#### `repository/FixedAssetRepository.java`
-* **Purpose:** Spring Data JPA interface for the `assets` table.
+    * `id` (`UUID`): Primary key. Auto-generated. Updatable = false.
+    * `assetId` (`UUID`): Foreign key reference to the parent `FixedAsset`.
+    * `eventType` (`String`): Categorization of the action (e.g., `CREATED`, `STATUS_CHANGED`).
+    * `description` (`String`): Human-readable explanation of the event.
+    * `oldValue` (`String`): Snapshot of the state *before* the change (usually stringified JSON).
+    * `newValue` (`String`): Snapshot of the state *after* the change (usually stringified JSON).
+    * `performedBy` (`String`): The username of the actor who triggered the event.
+    * `performedAt` (`LocalDateTime`): The exact timestamp the event was recorded. Defaults to `LocalDateTime.now()`. Updatable = false.
 * **Methods:**
-    * `Optional<FixedAsset> findByAssetCode(String assetCode)`: Fetches an asset by its unique business code.
-    * `boolean existsByAssetCode(String assetCode)`: Validation helper for creation.
+    * Standard getters and setters automatically generated by Lombok's `@Getter` and `@Setter`.
+    * `builder()`: Builder pattern method automatically generated by Lombok's `@Builder`.
 
-#### `repository/AssetHistoryRepository.java`
-* **Purpose:** Spring Data JPA interface for the `asset_history` table.
+### 2.3. Data Transfer Objects (DTOs)
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.dto.FixedAssetDTO`
+**Purpose:** Serves as the safe data transport layer between the frontend API and the backend service. It prevents exposing JPA proxy objects and enforces strict input validation at the controller boundary.
+* **Attributes:** Mirrors all attributes found in `FixedAsset.java`.
 * **Methods:**
-    * `List<AssetHistory> findByAssetIdOrderByPerformedAtDesc(UUID assetId)`: Retrieves the chronological lifecycle of a specific asset for the FA-04 requirement.
+    * Standard getters and setters automatically generated by Lombok's `@Getter` and `@Setter`.
+    * `builder()`: Builder pattern method automatically generated by Lombok's `@Builder`.
+* **Validation Logic (via Annotations):**
+    * `@NotBlank(message = "Mã tài sản không được để trống")` on `assetCode` & `name`.
+    * `@Size(max = 50, message = "Mã tài sản tối đa 50 ký tự")` on `assetCode`.
+    * `@NotNull(message = "Danh mục không được để trống")` on `categoryId` & `managingUnitId`.
+    * `@NotNull(message = "Nguyên giá không được để trống")` on `originalCost`.
+    * `@DecimalMin(value = "0.0", inclusive = true, message = "Nguyên giá phải >= 0")` on `originalCost`.
+    * `@NotNull(message = "Ngày ghi tăng không được để trống")` on `acquisitionDate`.
+    * `@PastOrPresent(message = "Ngày ghi tăng không thể ở tương lai")` on `acquisitionDate`.
+    * `@NotNull(message = "Thời gian sử dụng không được để trống")` on `usefulLifeYears`.
+    * `@Min(value = 1, message = "Thời gian sử dụng phải lớn hơn 0")` on `usefulLifeYears`.
 
-### 5. Services
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.dto.AssetHistoryDTO`
+**Purpose:** A simplified data shape returned to the frontend when querying an asset's lifecycle history, ensuring database internals aren't unnecessarily exposed.
+* **Attributes:** `id`, `assetId`, `eventType`, `description`, `oldValue`, `newValue`, `performedBy`, `performedAt`.
+* **Methods:**
+    * Getters for all attributes generated by Lombok's `@Getter`.
+    * `builder()`: Builder pattern method automatically generated by Lombok's `@Builder`.
+
+### 2.4. Repositories
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.repository.FixedAssetRepository`
+**Purpose:** The Spring Data JPA interface abstracting direct database operations for the `assets` table.
+* **Attributes:** None.
+* **Methods:**
+    * `findAll(Pageable pageable)`: (Inherited from `JpaRepository`) Returns a paginated list of assets.
+    * `findById(UUID id)`: (Inherited) Finds an asset by its primary key.
+    * `save(FixedAsset entity)`: (Inherited) Inserts or updates an asset.
+    * `Optional<FixedAsset> findByAssetCode(String assetCode)`: Custom query to locate an asset using its unique business identifier.
+    * `boolean existsByAssetCode(String assetCode)`: Custom query returning a boolean, highly optimized for checking uniqueness during asset creation to prevent duplicates.
+
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.repository.AssetHistoryRepository`
+**Purpose:** The Spring Data JPA interface for querying the `asset_history` table.
+* **Attributes:** None.
+* **Methods:**
+    * `save(AssetHistory entity)`: (Inherited) Inserts a new ledger entry.
+    * `List<AssetHistory> findByAssetIdOrderByPerformedAtDesc(UUID assetId)`: Custom query to fetch the chronological event trail for a specific asset, ordered from newest to oldest. Satisfies the FA-04 requirement.
+
 ### 2.5. Services
-#### `service/FixedAssetService.java`
-* **Purpose:** Contains the core business logic, depreciation mathematics, and transaction boundaries.
-* **Dependencies:** `FixedAssetRepository`, `AssetHistoryRepository`, `AuditLogService` (from M4).
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.service.FixedAssetService`
+**Purpose:** The core engine of M2. It houses the business rules, the depreciation mathematics, and the transaction boundaries. It integrates deeply with the M4 Audit module.
+* **Attributes:**
+    * `fixedAssetRepository`: Injected dependency to access the `assets` table.
+    * `assetHistoryRepository`: Injected dependency to access the `asset_history` table.
+    * `auditLogService`: Injected dependency (from the M4 Audit module) to push events to the global system security trail.
 * **Methods:**
-    * `List<FixedAsset> getAllAssets()`: Fetches all assets from the DB.
-    * `FixedAsset createAsset(FixedAssetDTO dto)`: Initializes a new asset. Forces `accumulatedDepreciation` to 0, `netBookValue` to `originalCost`, and `status` to `IN_USE`. Persists to DB, creates an `AssetHistory` log, and fires an `AuditLogService.log()` event.
-    * `FixedAsset calculateCurrentDepreciation(UUID id)`: The router method for FA-02. Fetches the asset, checks `depreciationMethod`, routes to the correct mathematical private method, and returns the updated entity.
-    * `FixedAsset calculateStraightLine(FixedAsset asset)` *(Private)*: Calculates linear depreciation. Formula: `(Cost - Salvage) * (MonthsUsed / TotalUsefulMonths)`. Updates entity financials.
-    * `FixedAsset calculateDecliningBalance(FixedAsset asset)` *(Private)*: Implements accelerated depreciation (1.5x, 2.0x, 2.5x multipliers depending on life years) per Circular 45. Falls back to straight-line when the accelerated rate drops below the linear rate. Updates entity financials.
-    * `updateFinancials(FixedAsset asset, BigDecimal accumulated, BigDecimal salvageValue)`: Helper method to update accumulated depreciation and net book value.
-    * `FixedAsset updateAssetStatus(UUID id, AssetStatus newStatus, String reason, String performedBy)`: Core integration method for FA-03. Changes the asset's state, forces an `AssetHistory` insert, and triggers the `AuditLog`. Heavily utilized by Handover and Liquidation modules.
-    * `void saveHistoryLog(UUID assetId, String eventType, String description, String oldValue, String newValue, String performedBy)` *(Private)*: Utility to build and persist an `AssetHistory` entity.
+    * `Page<FixedAsset> getAllAssets(Pageable pageable)`: Passes a pagination request to the repository and returns the page of assets.
+    * `FixedAsset createAsset(FixedAssetDTO dto, String username)`: Handles FA-01 registration. It checks `existsByAssetCode` (throws `BusinessRuleException` if true). It builds the entity, forcing `accumulatedDepreciation` to 0, `netBookValue` to `originalCost`, and `status` to `IN_USE`. It saves the entity, calls `saveHistoryLog`, and calls `auditLogService.log()`. Returns the saved entity.
+    * `FixedAsset calculateCurrentDepreciation(UUID id)`: The router method for FA-02. Fetches the asset (throws `ResourceNotFoundException` if invalid). Checks the `depreciationMethod` property. Routes execution to either `calculateStraightLine` or `calculateDecliningBalance`. Returns the financially updated asset.
+    * `FixedAsset calculateStraightLine(FixedAsset asset)` *(Private)*: Computes linear depreciation. Formula: `(Cost - Salvage) * (MonthsUsed / TotalUsefulMonths)`. Updates `accumulatedDepreciation` and `netBookValue` in memory. Returns the asset.
+    * `FixedAsset calculateDecliningBalance(FixedAsset asset)` *(Private)*: Mathematical stub for Circular 45 accelerated depreciation. Determines multipliers based on `usefulLifeYears` (e.g., 1.5x up to 4 years). Falls back to straight-line when the accelerated curve drops below the linear curve. Updates financials and returns the asset.
+    * `FixedAsset updateAssetStatus(UUID id, AssetStatus newStatus, String reason, String username)`: Handles FA-03 manual status changes (e.g., to `MAINTENANCE`). Routes to `updateAssetInternal` passing `null` for `newUnitId`.
+    * `FixedAsset updateAssetStatusAndUnit(UUID id, AssetStatus newStatus, UUID newUnitId, String reason, String username)`: **Crucial M4 Hook.** Called by Handover module to execute transfers. Routes to `updateAssetInternal`.
+    * `FixedAsset updateAssetInternal(UUID id, AssetStatus newStatus, UUID newUnitId, String reason, String username)` *(Private)*: Central execution for state changes. Fetches asset, updates `status`, updates `managingUnitId` (if provided). Saves the entity. Calls `saveHistoryLog`. Calls `auditLogService.log` with a JSON delta of the before/after state. Returns updated asset.
+    * `FixedAsset getAssetOrThrow(UUID id)` *(Private)*: Helper that calls `findById` and throws `ResourceNotFoundException` if no result is found.
+    * `void saveHistoryLog(UUID assetId, String eventType, String description, String oldValue, String newValue, String performedBy)` *(Private)*: Builder pattern utility that constructs and saves an `AssetHistory` record to satisfy FA-04.
 
 ### 2.6. Controllers
-#### `controller/FixedAssetController.java`
-* **Purpose:** Exposes RESTful HTTP endpoints for the frontend. Protects routes based on `SecurityConfig`. Wraps all returns in `ApiResponse`.
+#### `vn.edu.hust.soict.soe.assetmanagement.asset.controller.FixedAssetController`
+**Purpose:** Exposes RESTful HTTP endpoints to the Vite frontend. It enforces security roles via `@PreAuthorize` and strictly formats responses using `ApiResponse` and `PageResponse`.
+* **Attributes:**
+    * `fixedAssetService`: Injected to handle business logic.
+    * `assetHistoryRepository`: Injected to handle FA-04 queries directly.
 * **Methods:**
-    * `ResponseEntity<ApiResponse<List<FixedAssetDTO>>> getAllAssets()`: Mapped to `GET /api/assets`. Returns all assets.
-    * `ResponseEntity<ApiResponse<FixedAssetDTO>> getAssetById(UUID id)`: Mapped to `GET /api/assets/{id}`. Retrieves specific asset, triggering `calculateCurrentDepreciation()` so the frontend sees real-time financial values.
-    * `ResponseEntity<ApiResponse<FixedAssetDTO>> createAsset(@Valid FixedAssetDTO)`: Mapped to `POST /api/assets`.
-    * `ResponseEntity<ApiResponse<FixedAssetDTO>> calculateDepreciation(UUID id)`: Mapped to `GET /api/assets/{id}/depreciation`. Explicit endpoint to force recalculation of financials.
-    * `ResponseEntity<ApiResponse<FixedAssetDTO>> updateStatus(...)`: Mapped to `PATCH /api/assets/{id}/status`. Exposes status updates to authorized users.
-    * `ResponseEntity<ApiResponse<List<AssetHistoryDTO>>> getAssetHistory(UUID id)`: Mapped to `GET /api/assets/{id}/history`. Returns chronological ledger (FA-04).
-    * `FixedAssetDTO mapToDTO(FixedAsset)` & `AssetHistoryDTO mapToHistoryDTO(AssetHistory)` *(Private)*: Object mappers.
+    * `ResponseEntity<ApiResponse<PageResponse<FixedAssetDTO>>> getAllAssets(Pageable pageable)`: Mapped to `GET /api/assets`. Protected by `SYSTEM_ADMIN, ASSET_MANAGER, FINANCE_AUDIT, APPROVING_AUTH`. Returns all assets.
+    * `ResponseEntity<ApiResponse<FixedAssetDTO>> getAssetById(UUID id)`: Mapped to `GET /api/assets/{id}`. Protected by same roles. Calls `calculateCurrentDepreciation` to ensure real-time financial accuracy before returning.
+    * `ResponseEntity<ApiResponse<FixedAssetDTO>> createAsset(@Valid FixedAssetDTO dto, Authentication authentication)`: Mapped to `POST /api/assets`. Protected by `SYSTEM_ADMIN, ASSET_MANAGER`. Extracts the username from the Spring Security context, passes it to the service, and returns `201 Created`.
+    * `ResponseEntity<ApiResponse<FixedAssetDTO>> updateStatus(UUID id, AssetStatus newStatus, String reason, Authentication authentication)`: Mapped to `PATCH /api/assets/{id}/status`. Protected by `SYSTEM_ADMIN, ASSET_MANAGER`. Manual endpoint for operational status changes.
+    * `ResponseEntity<ApiResponse<List<AssetHistoryDTO>>> getAssetHistory(UUID id)`: Mapped to `GET /api/assets/{id}/history`. Protected by read roles. Returns the chronological ledger.
+    * `FixedAssetDTO mapToDto(FixedAsset asset)` *(Private)*: Manual object mapper translating a database entity into a secure transfer object.
+    * `AssetHistoryDTO mapToHistoryDto(AssetHistory h)` *(Private)*: Manual object mapper for history records.
+
 ---
 
-## Sequential Workflows
+## 3. Sequential Workflows
 
 ### Flow 1: Asset Registration (FA-01)
-**Goal:** Introduce a newly procured piece of equipment into the enterprise system.
-1.  **Request:** The ASSET_MANAGER user submits a `POST /api/assets` payload containing technical specs, original cost, useful life, and acquisition date.
-2.  **Validation:** `FixedAssetController` applies `@Valid` to the `FixedAssetDTO`. If valid, it calls `FixedAssetService.createAsset()`.
-3.  **Business Logic:** The service instantiates a `FixedAsset`. It forces `accumulatedDepreciation` to 0, `netBookValue` equal to `originalCost`, and `status` to `IN_USE`. 
-4.  **Persistence:** The asset is saved via `FixedAssetRepository.save()`. JPA automatically populates `createdAt` and `createdBy` via `BaseEntity`.
-5.  **Event Logging:** * `AssetHistory` is created denoting "Digital asset profile initialization".
-    * `AuditLogService.log("ASSET", "CREATE")` is fired for global system tracking.
-6.  **Response:** Controller maps the saved asset to DTO and returns `201 Created` wrapped in an `ApiResponse`.
+**Goal:** Introduce a newly procured piece of physical equipment into the enterprise system.
+1.  **Request:** A user with the `ASSET_MANAGER` role submits a `POST /api/assets` payload containing technical specifications, original cost, useful life, and the acquisition date. The HTTP request includes a valid JWT token.
+2.  **Controller Security & Validation:** The `FixedAssetController` intercepts the request. Spring Security's `@PreAuthorize` validates the JWT and role. The `@Valid` annotation triggers the constraints in `FixedAssetDTO` (e.g., checking that `originalCost` is >= 0). If valid, it extracts the username from the `Authentication` context and calls `FixedAssetService.createAsset()`.
+3.  **Service Business Logic:** * The service queries `FixedAssetRepository.existsByAssetCode()`. If the code exists, it throws a `BusinessRuleException` ("Mã tài sản đã tồn tại"), halting the process.
+    * It instantiates a new `FixedAsset` entity using the builder.
+    * It applies financial defaults: `accumulatedDepreciation` = 0, `netBookValue` = `originalCost`, and `status` = `IN_USE`. 
+4.  **Persistence:** The service calls `FixedAssetRepository.save()`. The `BaseEntity` listener automatically sets the `createdAt` and `createdBy` fields in PostgreSQL.
+5.  **Event Logging (FA-04 & RP-03):**
+    * The service calls the private `saveHistoryLog()` method, which creates an `AssetHistory` record noting "Khởi tạo hồ sơ tài sản".
+    * The service calls the M4 `AuditLogService.log("ASSET", "CREATE", ...)` to register the action in the global system security trail.
+6.  **Response Formulation:** The Controller maps the successfully saved entity back into a `FixedAssetDTO`, wraps it in Cuong's `ApiResponse.success()`, and returns HTTP `201 Created`.
 
 ### Flow 2: On-the-fly Depreciation Calculation (FA-02)
-**Goal:** Provide accurate current financial values whenever an asset is viewed.
-1.  **Request:** User accesses an asset profile via `GET /api/assets/{id}`.
-2.  **Routing:** Controller calls `FixedAssetService.calculateCurrentDepreciation(id)`.
-3.  **Calculation:**
-    * Service fetches the asset.
-    * It calculates `monthsUsed` using `ChronoUnit.MONTHS.between(acquisitionDate, LocalDate.now())`.
-    * **Straight-Line:** Spreads the depreciable base (Cost - Salvage) evenly over total months.
-    * **Declining Balance:** Applies accelerated depreciation rates based on Circular 45 multipliers, falling back to straight-line when the accelerated rate drops below the standard linear rate.
-4.  **State Update:** The calculated `accumulatedDepreciation` and `netBookValue` are injected into the asset object.
-5.  **Response:** The financially up-to-date asset is mapped to a DTO and returned to the client.
+**Goal:** Provide accurate, real-time financial values (Net Book Value and Accumulated Depreciation) whenever an asset profile is viewed.
+1.  **Request:** A user accesses an asset profile via `GET /api/assets/{id}`.
+2.  **Controller Routing:** The `FixedAssetController` receives the UUID and delegates to `FixedAssetService.calculateCurrentDepreciation(id)`.
+3.  **Calculation Engine (Service):**
+    * The service fetches the asset via `getAssetOrThrow`. If the UUID is invalid, it throws `ResourceNotFoundException`, which the `GlobalExceptionHandler` converts to a 404 response.
+    * It checks the `depreciationMethod` property.
+    * **If Straight-Line:** It invokes `calculateStraightLine()`. It calculates `monthsUsed` using `ChronoUnit.MONTHS.between` the asset's `acquisitionDate` and today. It computes the depreciable base (Cost - Salvage) and spreads it evenly over the total useful months.
+    * **If Declining Balance:** It invokes `calculateDecliningBalance()`. It applies accelerated depreciation rates based on Circular 45 multipliers. It loops year-by-year, eventually falling back to straight-line for the remaining months when the accelerated rate drops below the standard linear rate.
+4.  **Transient State Update:** The newly calculated `accumulatedDepreciation` and `netBookValue` are injected into the asset entity object in memory. *(Crucially, the service does not call `.save()` here, as the database acts as the system of record for the original parameters, while current values are time-deterministic and derived on the fly to save DB I/O).*
+5.  **Response Formulation:** The Controller maps the financially up-to-date asset entity into a `FixedAssetDTO`, wraps it in `ApiResponse.success()`, and returns it to the client.
 
-### Flow 3: Operational Status Update & Handover/Liquidation Integrations (FA-03 & FA-04)
-**Goal:** Track the state of the asset as it moves through the enterprise or leaves it.
-1.  **Trigger:** * *Manual:* ASSET_MANAGER calls `PATCH /api/assets/{id}/status` for maintenance.
-    * *Automated Integration:* The Handover module (M4) or Liquidation module (M4) successfully approves a workflow and programmaticly calls `FixedAssetService.updateAssetStatus(...)`.
-2.  **State Change:** The service updates `status`, `statusReason`, `statusChangedAt`, and `statusChangedBy`.
-3.  **Persistence:** Changes are saved to `FixedAssetRepository`.
-4.  **Ledger Update (FA-04):** The service records the `oldValue` (e.g., IN_USE) and `newValue` (e.g., TRANSFERRED) inside a new `AssetHistory` record.
-5.  **Global Audit:** `AuditLogService` records an `UPDATE_STATUS` event to ensure the transaction is visible in the system-wide security log.
-6.  **Resolution:** Transaction commits. The asset now formally reflects its new state across all reports and dashboards.
+### Flow 3: Operational Status Update & Cross-Module Integration (FA-03, FA-04, and M4 Hook)
+**Goal:** Track the state of the asset as it moves through the enterprise (Handover) or is retired (Liquidation).
+1.  **Trigger (Automated M4 Integration):** An authorized `MANAGER` successfully approves a Handover workflow in the M4 module. The `HandoverService` programmatically invokes `FixedAssetService.updateAssetStatusAndUnit(assetId, AssetStatus.TRANSFERRED, toUnitId, reason, approverUsername)`.
+2.  **State Change Execution:** The `FixedAssetService` executes `updateAssetInternal()`. It fetches the asset. It updates the asset's `status` to `TRANSFERRED` and its `managingUnitId` to the new department's ID.
+3.  **Persistence:** The modified asset is saved to the `FixedAssetRepository`.
+4.  **Ledger Update (FA-04):** The service calls `saveHistoryLog()` and records a new `AssetHistory` record, logging the `oldStatus` (e.g., `IN_USE`), the `newStatus` (`TRANSFERRED`), and the reason ("Handover approved").
+5.  **Global System Audit (RP-03):** The service invokes `AuditLogService.log()`, passing a JSON snapshot of the asset's status and unit ID *before* the transaction, and a JSON snapshot *after* the transaction.
+6.  **Resolution:** The database transaction commits. The asset now formally reflects its new state and ownership across all enterprise reports, stock balances, and UI dashboards.# Module 2 (M2): Fixed Asset Management
+

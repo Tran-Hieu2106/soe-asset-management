@@ -6,8 +6,13 @@ import vn.edu.hust.soict.soe.assetmanagement.audit.entity.AuditLog;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 /**
- * Response body for audit log queries (RP-03).
+ * ==============================================================================
+ * DTO: AuditLogDto
+ * PURPOSE: Secure payload object to send audit trail data to the frontend.
+ * RULE COMPLIANCE: Adheres to the "Never expose JPA entity objects directly" rule.
+ * ==============================================================================
  */
 @Getter
 @Builder
@@ -24,6 +29,9 @@ public class AuditLogDto {
     private String description;
     private LocalDateTime performedAt;
 
+    /**
+     * Factory method to map the JPA Entity into this safe DTO.
+     */
     public static AuditLogDto from(AuditLog log) {
         return AuditLogDto.builder()
                 .id(log.getId())

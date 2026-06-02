@@ -1,95 +1,117 @@
-# Module: Audit Log (M4 Scope)
+# Module 4 (M4): Audit Log Module
 
-## Overview
-The **Audit Log** module satisfies the **RP-03** requirement from Milestone 1. It acts as the central Nervous System for the entire State-Owned Enterprise Asset Management application. 
+## 1. Module Overview
+The **Audit Log** module serves as the central Nervous System and security foundation for the State-Owned Enterprise Asset and Inventory Management System. It explicitly fulfills the **RP-03** functional requirement from the Milestone 1 Software Requirements Specification (SRS): *"Audit log: searchable trail of all system actions by user and date."*
 
-Its primary responsibility is to provide a **searchable, immutable trail of all system actions**. Whenever a state change occurs in *any* other module (Assets, Stock, Handover, Liquidation), this module silently captures who did it, what they did, when they did it, their IP address, and the exact JSON snapshot of the data before and after the change.
+Unlike other operational modules (Assets, Stock, Handover), the Audit module operates as an **immutable, append-only ledger**. Whenever a state-changing event occurs anywhere in the system (e.g., an asset is created, stock is issued, a handover is approved), this module silently captures the exact context: *Who* did it, *What* they did, *When* it happened, from *Where* (IP Address), and the exact JSON data *Before and After* the change. 
 
-By architectural rule, this module uses an **append-only** database table and strictly avoids modifying existing records to ensure compliance with financial and system auditing standards.
-
----
-
-## Detailed File Specifications
-
-### 1. Entities
-#### `entity/AuditLog.java`
-* **Purpose:** The JPA Entity mapping to the `audit_logs` table. Crucially, **this class does NOT extend `BaseEntity`**. Per the project's architectural rules, append-only tables do not need `updatedAt` tracking.
-* **Attributes:**
-    * `id (UUID)`: Primary key. Auto-generated. Updatable = false.
-    * `module (String)`: The system area where the event occurred (e.g., `"ASSET"`, `"STOCK"`, `"HANDOVER"`).
-    * `action (String)`: The specific event trigger (e.g., `"CREATE"`, `"UPDATE_STATUS"`, `"APPROVE"`).
-    * `recordId (String)`: The UUID (cast to String) of the affected record in the target module.
-    * `recordCode (String)`: The human-readable business code of the affected record (e.g., `"TSCD-001"`).
-    * `performedBy (String)`: The username of the account that triggered the action.
-    * `userId (UUID)`: The ID of the user account.
-    * `ipAddress (String)`: The network IP address of the client making the request.
-    * `oldValue (String)`: A JSON string representation of the record *before* the action. (Usually `{}` for creations).
-    * `newValue (String)`: A JSON string representation of the record *after* the action.
-    * `description (String)`: A human-readable summary of the event (e.g., `"Changed asset status to LIQUIDATED"`).
-    * `performedAt (LocalDateTime)`: The exact timestamp of the event. Defaults to `LocalDateTime.now()`. Updatable = false.
-* **Methods:**
-    * Standard Lombok getters, setters, no-args constructor, all-args constructor, and Builder. No custom business methods exist here to ensure the entity remains a pure data container.
-
-### 2. Data Transfer Objects (DTOs)
-#### `dto/AuditLogDto.java`
-* **Purpose:** Safely transports audit data to the frontend, preventing the exposure of the raw JPA entity.
-* **Attributes:** Mirrors the `AuditLog` entity exactly, excluding the raw `userId` to minimize unnecessary data exposure.
-* **Methods:**
-    * `static AuditLogDto from(AuditLog log)`: A static factory method that maps the raw `AuditLog` JPA entity into this safe DTO using the Builder pattern.
-
-### 3. Repositories
-#### `repository/AuditLogRepository.java`
-* **Purpose:** The Spring Data JPA interface bridging the application to the PostgreSQL `audit_logs` table.
-* **Methods:**
-    * `Page<AuditLog> searchLogs(String module, String action, Pageable pageable)`: A custom `@Query` using JPQL. It dynamically filters logs based on the `module` and `action` parameters. If a parameter is `NULL`, it bypasses that specific filter. It returns a `Page` object for pagination support.
-
-### 4. Services
-#### `service/AuditLogService.java`
-* **Purpose:** The core engine of the module. It provides the read capabilities for auditors and the centralized write capability used by *every other module in the system*.
-* **Attributes:**
-    * `AuditLogRepository auditLogRepository`: Injected to handle database operations.
-* **Methods:**
-    * `Page<AuditLogDto> getAuditLogs(String module, String action, Pageable pageable)`: Calls the repository's search method, streams the result, and maps the `Page<AuditLog>` into a `Page<AuditLogDto>`. Marked as `@Transactional(readOnly = true)`.
-    * `void log(String module, String action, String recordId, String recordCode, String oldValue, String newValue, String description)`: 
-        * **Behavior:** This is the global hook. 
-        * **Step 1:** It reaches into Spring's `SecurityContextHolder` to extract the `User` object, grabbing the active `username` and `userId`.
-        * **Step 2:** It reaches into Spring's `RequestContextHolder` to grab the raw HTTP Request, securely extracting the user's `X-Forwarded-For` (Client IP) or falling back to `RemoteAddr`.
-        * **Step 3:** It builds the `AuditLog` entity and saves it.
-        * **Crucial Detail:** Marked with `@Transactional(propagation = Propagation.REQUIRED)`. This means it *joins* the database transaction of the module calling it. If a Handover approval fails and rolls back, the Audit Log also rolls back, preventing "phantom" logs of failed actions.
-
-### 5. Controllers
-#### `controller/AuditLogController.java`
-* **Purpose:** Exposes the REST API for retrieving audit logs (RP-03).
-* **Attributes:** * `AuditLogService auditLogService`: Handles the business logic.
-* **Methods:**
-    * `getAuditLogs(...)` mapped to `GET /api/audit-logs`:
-        * **Security:** Protected by `@PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'FINANCE_AUDIT')")`. Only high-level oversight roles can read the system trail.
-        * **Inputs:** Optional `module` and `action` query parameters, plus `page` and `size` for pagination.
-        * **Behavior:** Constructs a `PageRequest` sorted by `performedAt` descending (newest first). Calls the service layer.
-        * **Output:** Returns a `ResponseEntity<ApiResponse<PageResponse<AuditLogDto>>>`. This perfectly complies with Cuong's global wrapper rules.
+By architectural rule defined in `database-schema.md`, this module's records cannot be updated or deleted, providing a cryptographically sound trail for financial and system auditors.
 
 ---
 
-## Sequential Workflows
+## 2. Detailed File Specifications (Class, Attribute, & Method Dictionary)
 
-### Flow 1: Inter-Module Event Logging (Cross-cutting Concern)
-**Goal:** Silently capture a state change triggered in another module (e.g., M2 Asset, M3 Stock, M4 Handover).
+### 2.1. Entities
+#### `vn.edu.hust.soict.soe.assetmanagement.audit.entity.AuditLog`
+**Purpose:** The JPA Entity strictly mapping to the `audit_logs` database table. **Crucially, it DOES NOT extend `BaseEntity`.** Because it is an append-only ledger, it cannot logically possess an `updatedAt` field, thus enforcing immutability at the schema level.
 
-1. **Trigger:** A user calls an endpoint in another module, such as `PATCH /api/liquidations/{id}/approve`.
-2. **Main Transaction Starts:** `LiquidationService.approveRequest()` begins a `@Transactional` block.
-3. **Database Update:** The Liquidation is updated, and the M2 `FixedAsset` status is changed.
-4. **Log Invocation:** The Liquidation service calls `auditLogService.log("LIQUIDATION", "APPROVE", id, code, oldJson, newJson, "Approved...")`.
-5. **Context Extraction:** The `AuditLogService` intercepts the current HTTP Request thread. It extracts the approver's JWT credentials (Username/ID) and network IP address.
-6. **Persistence:** The log is saved to the DB. Because of `Propagation.REQUIRED`, this save is attached to the Liquidation's transaction.
-7. **Commit:** The overarching transaction commits. The liquidation, the asset update, and the audit log are all permanently written to PostgreSQL simultaneously.
+* **Attributes:**
+  * `id` (`UUID`): The primary key. Automatically generated by JPA/PostgreSQL. Marked with `updatable = false` to guarantee it cannot be modified post-creation.
+  * `module` (`String`): The system domain where the event originated (e.g., `"ASSET"`, `"STOCK"`, `"HANDOVER"`, `"LIQUIDATION"`). Max length 50.
+  * `action` (`String`): The specific technical operation performed (e.g., `"CREATE"`, `"UPDATE_STATUS"`, `"APPROVE"`, `"REJECT"`). Max length 50.
+  * `recordId` (`String`): The primary key UUID (cast to a string) of the specific record that was modified in the target module.
+  * `recordCode` (`String`): The human-readable business identifier of the modified record (e.g., `"TSCD-2024-001"`).
+  * `performedBy` (`String`): The exact `username` of the authenticated user who triggered the HTTP request.
+  * `userId` (`UUID`): The internal database ID of the user who triggered the event.
+  * `ipAddress` (`String`): The network IP address (IPv4 or IPv6) of the client machine making the request.
+  * `oldValue` (`String`): A stringified JSON snapshot of the record's state *before* the transaction occurred. Defaults to `{}` for creation events.
+  * `newValue` (`String`): A stringified JSON snapshot of the record's state *after* the transaction occurred.
+  * `description` (`String`): A human-readable, contextual summary of the event (e.g., *"Approved handover of asset to IT Department"*).
+  * `performedAt` (`LocalDateTime`): The exact timestamp the event occurred. Auto-initialized to `LocalDateTime.now()` and marked `updatable = false`.
 
-### Flow 2: Management Audit Review (RP-03)
-**Goal:** A Financial Auditor wants to review all system actions related to "STOCK" to investigate discrepancies.
+* **Methods:**
+  * Standard getters and setters automatically generated by Lombok's `@Getter` and `@Setter` annotations.
+  * `builder()`: Standard Lombok method returning an `AuditLogBuilder` for fluent object instantiation.
 
-1. **Request:** The auditor (holding the `FINANCE_AUDIT` role) opens the dashboard, which fires `GET /api/audit-logs?module=STOCK&page=0&size=50`.
-2. **Security Check:** `SecurityConfig` and `@PreAuthorize` intercept the request. The JWT token is validated, and the role is confirmed. Access granted.
-3. **Controller Routing:** `AuditLogController` receives the request, wraps the pagination parameters into a `PageRequest` sorted by newest-first, and calls `AuditLogService.getAuditLogs()`.
-4. **Data Retrieval:** The service calls `AuditLogRepository.searchLogs()`. The JPQL query ignores the `action` filter (since it's null) but filters the table where `module = 'STOCK'`.
-5. **Data Mapping:** The raw `Page<AuditLog>` entities are converted to `AuditLogDto` objects to strip out sensitive database mapping info.
-6. **Response Formulation:** The DTOs are wrapped in Cuong's `PageResponse` (to provide total elements/pages metadata), which is then wrapped in an `ApiResponse.success()`.
-7. **Delivery:** The auditor receives a structured 200 OK JSON response with the exact historical trail of all stock movements.
+### 2.2. Data Transfer Objects (DTOs)
+#### `vn.edu.hust.soict.soe.assetmanagement.audit.dto.AuditLogDto`
+**Purpose:** A secure transport object used to send audit data out to the frontend via the REST API. It intentionally omits sensitive internal identifiers (like `userId`) to protect system topology, sending only what the auditor needs to see.
+
+* **Attributes:**
+  * `id` (`UUID`): The audit log's unique identifier.
+  * `module` (`String`): The domain of the event.
+  * `action` (`String`): The specific action.
+  * `recordId` (`String`): The affected record's ID.
+  * `recordCode` (`String`): The affected record's business code.
+  * `performedBy` (`String`): The username of the actor.
+  * `ipAddress` (`String`): The network IP of the actor.
+  * `oldValue` (`String`): The before-state JSON.
+  * `newValue` (`String`): The after-state JSON.
+  * `description` (`String`): The human-readable summary.
+  * `performedAt` (`LocalDateTime`): The timestamp of the event.
+
+* **Methods:**
+  * Standard getters and setters automatically generated by Lombok's `@Getter` and `@Setter` annotations.
+  * `builder()`: Lombok builder method.
+  * `static AuditLogDto from(AuditLog log)`: A custom static factory method. It takes a raw `AuditLog` JPA Entity as input and safely maps its fields into a new `AuditLogDto` instance, stripping out the `userId`.
+
+### 2.3. Repositories
+#### `vn.edu.hust.soict.soe.assetmanagement.audit.repository.AuditLogRepository`
+**Purpose:** The Spring Data JPA interface abstracting PostgreSQL database interactions for the `audit_logs` table.
+
+* **Attributes:** None (It is an interface).
+* **Methods:**
+  * `save(AuditLog entity)`: (Inherited from `JpaRepository`) Inserts a new audit log into the database.
+  * `findById(UUID id)`: (Inherited) Retrieves a specific log by its ID.
+  * `Page<AuditLog> searchLogs(@Param("module") String module, @Param("action") String action, @Param("performedBy") String performedBy, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable)`: A highly complex, custom `@Query` using JPQL. It dynamically checks filters: `(:module IS NULL OR a.module = :module)`. This allows the frontend to send combinations of filters (e.g., just date, or date + user, or module + action) to fulfill the exact search requirements of RP-03.
+
+### 2.4. Services
+#### `vn.edu.hust.soict.soe.assetmanagement.audit.service.AuditLogService`
+**Purpose:** The central operational engine. It provides a read-only method for the Controller to search logs, and an extremely critical, globally-available write method (`log()`) that other modules inject to record their activities.
+
+* **Attributes:**
+  * `auditLogRepository` (`AuditLogRepository`): Injected dependency for database access.
+
+* **Methods:**
+  * `Page<AuditLogDto> getAuditLogs(String module, String action, String performedBy, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable)`: Annotated with `@Transactional(readOnly = true)`. Receives search parameters from the controller, passes them to the repository's `searchLogs` method, and maps the resulting `Page<AuditLog>` into a `Page<AuditLogDto>` for safe network transport.
+  * `void log(String module, String action, String recordId, String recordCode, String oldValue, String newValue, String description)`: **The Global Hook.** Annotated with `@Transactional(propagation = Propagation.REQUIRED)`. 
+    * *Explanation:* This method dynamically extracts the current user's `username` and `userId` directly from Spring's `SecurityContextHolder`. It then extracts the client's physical IP address from the `RequestContextHolder` (safely parsing `X-Forwarded-For` to bypass proxy/load-balancer strings). It builds the `AuditLog` entity and saves it. Because of `Propagation.REQUIRED`, this database save *binds* to the transaction of whatever called it. If `HandoverService` calls this, but the handover ultimately fails and rolls back, this audit log rolls back too.
+
+### 2.5. Controllers
+#### `vn.edu.hust.soict.soe.assetmanagement.audit.controller.AuditLogController`
+**Purpose:** Exposes the RESTful API endpoint to the Vite frontend for querying the audit trail. It strictly enforces RBAC (Role-Based Access Control) to ensure only authorized oversight personnel can view the logs.
+
+* **Attributes:**
+  * `auditLogService` (`AuditLogService`): Injected dependency to handle business logic.
+
+* **Methods:**
+  * `ResponseEntity<ApiResponse<PageResponse<AuditLogDto>>> getAuditLogs(String module, String action, String performedBy, LocalDate startDate, LocalDate endDate, int page, int size)`: 
+    * Mapped to `GET /api/audit-logs`.
+    * Protected by `@PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'FINANCE_AUDIT')")`.
+    * *Explanation:* Receives optional query parameters. It constructs a Spring `PageRequest` enforcing a descending sort on `performedAt` (so newest logs appear first). It safely converts `LocalDate` inputs into `LocalDateTime` boundaries (e.g., setting `startDate` to `00:00:00` and `endDate` to `23:59:59`). It calls the service, wraps the paginated DTOs in the global `PageResponse`, and finally wraps that in the global `ApiResponse.success()`.
+
+---
+
+## 3. Sequential Workflows
+
+### Flow 1: Inter-Module Event Logging (The "Silent Write" Flow)
+**Goal:** Create an immutable security record seamlessly in the background whenever a user modifies data in ANY other module (Assets, Stock, Handover, Liquidation).
+
+1. **Trigger in External Module:** e.g, An ASSET_MANAGER user calls `PATCH /api/assets/{id}/status` to change an asset from `IN_USE` to `MAINTENANCE`.
+2. **External Transaction Starts:** e.g, The `FixedAssetService.updateAssetStatus()` method begins a `@Transactional` block. It fetches the asset and modifies the database.
+3. **Audit Log Invocation:** e.g, Before returning, the `FixedAssetService` explicitly calls `auditLogService.log("ASSET", "UPDATE_STATUS", assetId, assetCode, oldJson, newJson, "Changed status to MAINTENANCE")`.
+4. **Context Extraction (Audit Module):**
+   * The `AuditLogService` halts and reaches into Spring Security's thread-local storage (`SecurityContextHolder`) to identify the user (the ASSET_MANAGER).
+   * It reaches into the Tomcat request thread (`RequestContextHolder`) to grab the incoming HTTP Request and extract the client's network IP (`X-Forwarded-For`).
+5. **Persistence & Transaction Binding:** e.g, The `AuditLogService` builds the `AuditLog` entity and calls `.save()`. Because the `log` method uses `Propagation.REQUIRED`, the database engine attaches this `INSERT` statement to the exact same database transaction opened in Step 2 by the `FixedAssetService`.
+6. **Commit:** The master transaction commits. Both the update and the audit log are simultaneously permanently written to PostgreSQL.
+
+### Flow 2: Management Audit Review (RP-03 Flow)
+**Goal:** Allow an auditor to search the system trail to investigate specific activities (e.g., "Show me all stock issues performed by User X last week").
+
+1. **Request:** A user logs in and is assigned the `FINANCE_AUDIT` role. They navigate to the Audit page on the UI and request `GET /api/audit-logs?module=STOCK&action=ISSUE&startDate=2024-05-01&endDate=2024-05-07`.
+2. **Security Interception:** Spring Security intercepts the request, decodes the JWT bearer token, and confirms the `FINANCE_AUDIT` role satisfies the `@PreAuthorize` requirement on the `AuditLogController`.
+3. **Controller Processing:** The `AuditLogController` receives the query parameters. It converts the `LocalDate` inputs into precise `LocalDateTime` boundaries to ensure exact querying. It builds a `PageRequest` sorted by descending date.
+4. **Service & Repository Execution:** The `AuditLogService` passes the parameters to `AuditLogRepository.searchLogs()`. Hibernate dynamically generates a SQL query that applies `WHERE module = 'STOCK'`, `action = 'ISSUE'`, and `performed_at BETWEEN start AND end`. Parameters like `performedBy` are ignored because they were passed as `NULL`.
+5. **Data Transformation:** The raw `AuditLog` entities returned from the database are streamed through the `AuditLogDto::from` factory method, stripping away internal database IDs (`userId`) and returning safe DTOs.
+6. **Response Delivery:** The Controller wraps the DTO list in `PageResponse` (providing UI pagination metadata like `totalPages` and `totalElements`), wraps that in `ApiResponse`, and returns HTTP `200 OK` to the auditor's browser.
