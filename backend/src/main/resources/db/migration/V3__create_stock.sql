@@ -46,7 +46,9 @@ CREATE TABLE storage_locations (
     name        VARCHAR(255) NOT NULL,
     unit_id     UUID         NOT NULL REFERENCES managing_units(id),
     is_active   BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMP    NOT NULL DEFAULT NOW()
+    created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
+    created_by  VARCHAR(100)
 );
 
 -- Stock transactions — CS-02 (every receipt and issue)
