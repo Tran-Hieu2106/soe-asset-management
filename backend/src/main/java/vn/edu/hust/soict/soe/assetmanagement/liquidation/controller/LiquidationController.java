@@ -342,4 +342,31 @@ public class LiquidationController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Đã từ chối yêu cầu thanh lý", updated));
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/liquidations/{id}/document — Download liquidation document
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Downloads the generated Biên bản thanh lý (Liquidation Record) document.
+     * Only available when the liquidation is in COMPLETED status.
+     *
+     * Returns raw PDF bytes (not wrapped in ApiResponse).
+     *
+     * @param id UUID of the liquidation request.
+     * @return 200 OK with PDF content, or 400 if not yet completed.
+     */
+    @GetMapping("/{id}/document")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER', 'APPROVING_AUTH', 'FINANCE_AUDIT')")
+    @Operation(summary = "Tải biên bản thanh lý",
+               description = "Tải xuống Biên bản thanh lý dạng PDF. " +
+                             "Chỉ khả dụng khi yêu cầu đã COMPLETED.")
+    public ResponseEntity<byte[]> downloadDocument(@PathVariable UUID id) {
+        byte[] pdfContent = liquidationService.downloadDocument(id);
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition",
+                        "attachment; filename=bien-ban-thanh-ly-" + id + ".pdf")
+                .body(pdfContent);
+    }
 }

@@ -22,5 +22,6 @@ public class MaterialDto {
     private Boolean       isActive;
     private String        notes;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String        createdBy;
 }

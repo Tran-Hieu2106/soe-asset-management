@@ -29,7 +29,8 @@ public class AssetCategory {
     private Integer usefulLifeMax;
 
     @Column(name = "depreciation_method", nullable = false, length = 20)
-    private String depreciationMethod;
+    @Builder.Default
+    private String depreciationMethod = "STRAIGHT_LINE";
 
     @Column(columnDefinition = "TEXT")
     private String description;

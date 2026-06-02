@@ -7,6 +7,7 @@ import vn.edu.hust.soict.soe.assetmanagement.common.BaseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -77,6 +78,9 @@ public class FixedAsset extends BaseEntity {
     @Column(name = "acquisition_date", nullable = false)
     private LocalDate acquisitionDate;
 
+    @Column(name = "funding_source", length = 100)
+    private String fundingSource;
+
     @Column(name = "useful_life_years", nullable = false)
     private Integer usefulLifeYears;
 
@@ -84,10 +88,31 @@ public class FixedAsset extends BaseEntity {
     @Builder.Default
     private String depreciationMethod = "STRAIGHT_LINE";
 
+    @Column(name = "depreciation_start_date")
+    private LocalDate depreciationStartDate;
+
+    @Column(name = "depreciation_end_date")
+    private LocalDate depreciationEndDate;
+
+    @Column(name = "annual_depreciation_rate", precision = 8, scale = 4)
+    private BigDecimal annualDepreciationRate;
+
     // --- Status ---
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private AssetStatus status;
+
+    @Column(name = "status_reason", columnDefinition = "TEXT")
+    private String statusReason;
+
+    @Column(name = "status_changed_at")
+    private LocalDateTime statusChangedAt;
+
+    @Column(name = "status_changed_by", length = 100)
+    private String statusChangedBy;
+
+    @Column(name = "purchase_document_ref", length = 255)
+    private String purchaseDocumentRef;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

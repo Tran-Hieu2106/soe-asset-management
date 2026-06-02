@@ -606,4 +606,25 @@ public class LiquidationService {
         long count = liquidationRepository.count() + 1;
         return String.format("TL-%s-%04d", year, count);
     }
+
+    /**
+     * Downloads the liquidation document (Biên bản thanh lý) as PDF.
+     * Only available when the request is in COMPLETED status.
+     *
+     * @param id UUID of the liquidation request.
+     * @return PDF bytes.
+     * @throws BusinessRuleException if request is not COMPLETED.
+     */
+    public byte[] downloadDocument(UUID id) {
+        LiquidationRequest request = findOrThrow(id);
+        if (request.getStatus() != LiquidationStatus.COMPLETED) {
+            throw new BusinessRuleException(
+                    "Chỉ có thể tải tài liệu khi thanh lý đã hoàn thành.");
+        }
+        // TODO: Implement actual PDF generation with iText7 or OpenHTMLtoPDF
+        // For now, return a placeholder message
+        String message = "Biên bản thanh lý: " + request.getRequestCode() +
+                " - Tài sản: " + request.getAssetId();
+        return message.getBytes();
+    }
 }

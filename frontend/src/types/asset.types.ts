@@ -18,6 +18,7 @@ export interface FixedAsset {
   location?: string;
   originalCost: number;
   acquisitionDate: string;
+  fundingSource?: string;
   usefulLifeYears: number;
   salvageValue?: number;
   depreciationMethod?: string;
@@ -28,7 +29,14 @@ export interface FixedAsset {
   depreciationStartDate?: string;
   depreciationEndDate?: string;
   status: AssetStatus;
+  statusReason?: string;
+  statusChangedAt?: string;
+  statusChangedBy?: string;
+  purchaseDocumentRef?: string;
   notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
 }
 
 export interface AssetHistory {
