@@ -2,8 +2,8 @@ spring:
   datasource:
     # Using the database credentials we set up in docker-compose.yml
     url: jdbc:postgresql://localhost:5432/soe_asset_db
-    username: your_username
-    password: your_password
+    username: soe_admin
+    password: soe_password
     driver-class-name: org.postgresql.Driver
 
   jpa:

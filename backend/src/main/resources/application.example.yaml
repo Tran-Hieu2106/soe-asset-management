@@ -9,6 +9,6 @@ server:
 
 jwt:
   # 256-bit Hex key
-  secret: your_secret_key_here
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   # 8 hours expiration
   expiration-ms: 28800000
