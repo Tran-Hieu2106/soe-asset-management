@@ -27,33 +27,28 @@ soe-asset-management/
 
 ---
 
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 - Java 17+, Maven 3.8+
-- Node.js 18+, npm 9+
-- Docker & Docker Compose
+- Node.js 20+, npm 9+
+- Docker Desktop
 - PostgreSQL run via Docker
 
-### Run the full stack locally
 
-Start the database, backend, and frontend simultaneously.
-
-```bash
-docker-compose up --build
-```
+## System Launcher
 - Database    -> `http://localhost:5432`
 - Backend API -> `http://localhost:8080`
 - Frontend    -> `http://localhost:5173`
 
-### Run individually
-Run the frontend and backend separately.
-
-#### Backend
+### Database
 ```bash
-# Database via Docker
-docker-compose up -d
+docker-compose up --build # Build Docker
+docker-compose up -d # Database via Docker
+```
 
+The database will be available at `http://localhost:5432`.
+
+### Backend
+```bash
 cd backend 
 ./mvnw clean install # Install dependencies
 ./mvnw spring-boot:run # Start the server
@@ -61,7 +56,7 @@ cd backend
 
 The backend will be available at `http://localhost:8080`.
 
-#### Frontend
+### Frontend
 ```bash
 cd frontend 
 npm install # Install dependencies
