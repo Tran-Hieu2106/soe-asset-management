@@ -1,7 +1,7 @@
 # Frontend — React + TypeScript
 
 **Owner:** M5
-**Stack:** React 18 · TypeScript · Vite · Ant Design · Axios · Zustand (or Redux Toolkit)
+**Stack:** React 19 · TypeScript · Vite · Ant Design 6 · Axios · Zustand
 
 ---
 

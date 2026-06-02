@@ -89,8 +89,7 @@ Each module owner writes unit tests for their own services.
 test/java/vn/edu/soe/assetmanagement/
 ├── asset/    → AssetServiceTest, DepreciationServiceTest   [M2]
 ├── stock/    → MaterialServiceTest, StockTransactionServiceTest [M3]
-├── handover/ → HandoverServiceTest                         [M4]
-└── report/   → ReportServiceTest                          [M4]
+└── handover/ → HandoverServiceTest                         [M4]
 ```
 
 Run all tests: `mvn test`

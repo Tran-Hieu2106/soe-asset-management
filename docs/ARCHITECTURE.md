@@ -114,6 +114,11 @@ The system uses stateless JSON Web Tokens (JWT).
 3. Client stores the JWT (Zustand `useAuthStore` → localStorage).
 4. `JwtAuthFilter` intercepts incoming requests, validates the signature, extracts the username, loads authorities (Roles), and populates the Spring `SecurityContext`.
 
+**Token Configuration:**
+- **Expiration:** 8 hours (28800000ms) - configured in `application.yaml`
+- **Refresh Strategy:** None - stateless design. Users must re-login after token expires.
+- **Storage:** Client-side in localStorage via Zustand persistence middleware
+
 ### 5.2. Role-Based Access Control (RBAC)
 Roles map directly to the Bảng 2.6 specifications:
 - `SYSTEM_ADMIN`, `ASSET_MANAGER`, `WAREHOUSE`, `APPROVING_AUTH`, `FINANCE_AUDIT`.
