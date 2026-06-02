@@ -1,130 +1,138 @@
 package vn.edu.hust.soict.soe.assetmanagement.asset.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 import vn.edu.hust.soict.soe.assetmanagement.asset.dto.AssetHistoryDTO;
 import vn.edu.hust.soict.soe.assetmanagement.asset.dto.FixedAssetDTO;
 import vn.edu.hust.soict.soe.assetmanagement.asset.entity.AssetHistory;
 import vn.edu.hust.soict.soe.assetmanagement.asset.entity.FixedAsset;
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
-import vn.edu.hust.soict.soe.assetmanagement.asset.service.FixedAssetService;
 import vn.edu.hust.soict.soe.assetmanagement.asset.repository.AssetHistoryRepository;
-import vn.edu.hust.soict.soe.assetmanagement.common.ApiResponse; // IMPORT ApiResponse
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.lang.NonNull;
-import jakarta.validation.Valid;
+import vn.edu.hust.soict.soe.assetmanagement.asset.service.FixedAssetService;
+import vn.edu.hust.soict.soe.assetmanagement.common.ApiResponse;
+import vn.edu.hust.soict.soe.assetmanagement.common.PageResponse;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Fixed asset endpoints.
- * Refactored to exclusively return ApiResponse wrappers and DTOs.
+ * ==============================================================================
+ * CONTROLLER: FixedAssetController
+ * PURPOSE: Exposes REST API for Assets. 
+ * RULE CHECK: 
+ * - Wraps all returns in ApiResponse and PageResponse.
+ * - Applies @PreAuthorize exactly as dictated in SecurityConfig.java.
+ * - Extracts username securely from the Authentication object.
+ * ==============================================================================
  */
 @RestController
 @RequestMapping("/api/assets")
-@Tag(name = "Fixed Assets", description = "Fixed Asset Management Module (FA-01 -> FA-04)")
+@RequiredArgsConstructor
+@Tag(name = "Fixed Assets", description = "Quản lý vòng đời tài sản (FA-01 -> FA-04)")
+@SecurityRequirement(name = "bearerAuth")
 public class FixedAssetController {
 
-    @Autowired
-    private FixedAssetService fixedAssetService;
+    private final FixedAssetService fixedAssetService;
+    private final AssetHistoryRepository assetHistoryRepository;
 
-    @Autowired
-    private AssetHistoryRepository assetHistoryRepository;
-
-    @Operation(summary = "Get all assets", description = "Returns a list of all digital asset profiles")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<FixedAssetDTO>>> getAllAssets() {
-        List<FixedAssetDTO> dtos = fixedAssetService.getAllAssets().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success("Assets retrieved successfully", dtos));
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER', 'FINANCE_AUDIT', 'APPROVING_AUTH')")
+    @Operation(summary = "Lấy danh sách tài sản (phân trang)")
+    public ResponseEntity<ApiResponse<PageResponse<FixedAssetDTO>>> getAllAssets(Pageable pageable) {
+        Page<FixedAsset> page = fixedAssetService.getAllAssets(pageable);
+        Page<FixedAssetDTO> dtoPage = page.map(this::mapToDto);
+        return ResponseEntity.ok(ApiResponse.success("Tải danh sách thành công", PageResponse.of(dtoPage)));
     }
 
-    @Operation(summary = "Get asset details", description = "Retrieve full technical parameters and current financial status by ID")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<FixedAssetDTO>> getAssetById(@PathVariable @NonNull UUID id) {
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER', 'FINANCE_AUDIT', 'APPROVING_AUTH')")
+    @Operation(summary = "Xem chi tiết tài sản (tính khấu hao realtime)")
+    public ResponseEntity<ApiResponse<FixedAssetDTO>> getAssetById(@PathVariable UUID id) {
         FixedAsset asset = fixedAssetService.calculateCurrentDepreciation(id);
-        return ResponseEntity.ok(ApiResponse.success(mapToDTO(asset)));
+        return ResponseEntity.ok(ApiResponse.success("Tải thông tin chi tiết thành công", mapToDto(asset)));
     }
 
-    @Operation(summary = "Create new asset profile", description = "Create a new asset profile with full parameters (FA-01)")
     @PostMapping
-    public ResponseEntity<ApiResponse<FixedAssetDTO>> createAsset(@Valid @RequestBody FixedAssetDTO assetDTO) {
-        FixedAsset newAsset = fixedAssetService.createAsset(assetDTO);
-        return new ResponseEntity<>(ApiResponse.success("Asset created successfully", mapToDTO(newAsset)), HttpStatus.CREATED);
-    }
-
-    @Operation(summary = "Calculate depreciation", description = "Calculate accumulated depreciation and remaining book value per Circular 45/2013/TT-BTC")
-    @GetMapping("/{id}/depreciation")
-    public ResponseEntity<ApiResponse<FixedAssetDTO>> calculateDepreciation(@PathVariable @NonNull UUID id) {
-        FixedAsset asset = fixedAssetService.calculateCurrentDepreciation(id);
-        return ResponseEntity.ok(ApiResponse.success("Depreciation calculated", mapToDTO(asset)));
-    }
-
-    @Operation(summary = "Update operational status", description = "Change asset status (maintenance, liquidation...) and save history log (FA-03)")
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<FixedAssetDTO>> updateStatus(
-            @PathVariable @NonNull UUID id, 
-            @RequestParam AssetStatus newStatus, 
-            @RequestParam String reason) {
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER')")
+    @Operation(summary = "Tạo mới hồ sơ tài sản")
+    public ResponseEntity<ApiResponse<FixedAssetDTO>> createAsset(
+            @Valid @RequestBody FixedAssetDTO dto, 
+            Authentication authentication) {
         
-        FixedAsset updated = fixedAssetService.updateAssetStatus(id, newStatus, reason, "current_user"); 
-        return ResponseEntity.ok(ApiResponse.success("Status updated successfully", mapToDTO(updated)));
+        FixedAsset created = fixedAssetService.createAsset(dto, authentication.getName());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Đăng ký tài sản thành công", mapToDto(created)));
     }
 
-    @Operation(summary = "Get asset lifecycle history", description = "Retrieve immutable log of status changes and reassignments (FA-04)")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER')")
+    @Operation(summary = "Cập nhật trạng thái tài sản thủ công (ví dụ: Bảo trì)")
+    public ResponseEntity<ApiResponse<FixedAssetDTO>> updateStatus(
+            @PathVariable UUID id, 
+            @RequestParam AssetStatus newStatus, 
+            @RequestParam String reason,
+            Authentication authentication) {
+        
+        FixedAsset updated = fixedAssetService.updateAssetStatus(id, newStatus, reason, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công", mapToDto(updated)));
+    }
+
     @GetMapping("/{id}/history")
-    public ResponseEntity<ApiResponse<List<AssetHistoryDTO>>> getAssetHistory(@PathVariable @NonNull UUID id) {
-        List<AssetHistoryDTO> history = assetHistoryRepository.findByAssetIdOrderByPerformedAtDesc(id).stream()
-                .map(this::mapToHistoryDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success("Asset history retrieved", history));
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER', 'FINANCE_AUDIT', 'APPROVING_AUTH')")
+    @Operation(summary = "Xem lịch sử vòng đời tài sản (FA-04)")
+    public ResponseEntity<ApiResponse<List<AssetHistoryDTO>>> getAssetHistory(@PathVariable UUID id) {
+        List<AssetHistoryDTO> history = assetHistoryRepository.findByAssetIdOrderByPerformedAtDesc(id)
+                .stream().map(this::mapToHistoryDto).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("Tải lịch sử thành công", history));
     }
 
-    // --- HELPER MAPPERS ---
-    // Maps Entity to DTO to prevent exposing JPA Entity details to the frontend
-    
-    private FixedAssetDTO mapToDTO(FixedAsset asset) {
-        FixedAssetDTO dto = new FixedAssetDTO();
-        dto.setId(asset.getId());
-        dto.setAssetCode(asset.getAssetCode());
-        dto.setName(asset.getName());
-        dto.setCategoryId(asset.getCategoryId());
-        dto.setManagingUnitId(asset.getManagingUnitId());
-        dto.setSerialNumber(asset.getSerialNumber());
-        dto.setManufacturer(asset.getManufacturer());
-        dto.setModel(asset.getModel());
-        dto.setCountryOfOrigin(asset.getCountryOfOrigin());
-        dto.setTechnicalSpecs(asset.getTechnicalSpecs());
-        dto.setLocation(asset.getLocation());
-        dto.setOriginalCost(asset.getOriginalCost());
-        dto.setAcquisitionDate(asset.getAcquisitionDate());
-        dto.setFundingSource(asset.getFundingSource());
-        dto.setUsefulLifeYears(asset.getUsefulLifeYears());
-        dto.setSalvageValue(asset.getSalvageValue());
-        dto.setDepreciationMethod(asset.getDepreciationMethod());
-        dto.setAccumulatedDepreciation(asset.getAccumulatedDepreciation());
-        dto.setNetBookValue(asset.getNetBookValue());
-        dto.setStatus(asset.getStatus());
-        return dto;
+    // ── MAPPERS ───────────────────────────────────────────────────────────
+    private FixedAssetDTO mapToDto(FixedAsset asset) {
+        return FixedAssetDTO.builder()
+                .id(asset.getId())
+                .assetCode(asset.getAssetCode())
+                .name(asset.getName())
+                .categoryId(asset.getCategoryId())
+                .managingUnitId(asset.getManagingUnitId())
+                .serialNumber(asset.getSerialNumber())
+                .manufacturer(asset.getManufacturer())
+                .model(asset.getModel())
+                .countryOfOrigin(asset.getCountryOfOrigin())
+                .technicalSpecs(asset.getTechnicalSpecs())
+                .location(asset.getLocation())
+                .originalCost(asset.getOriginalCost())
+                .acquisitionDate(asset.getAcquisitionDate())
+                .usefulLifeYears(asset.getUsefulLifeYears())
+                .salvageValue(asset.getSalvageValue())
+                .depreciationMethod(asset.getDepreciationMethod())
+                .accumulatedDepreciation(asset.getAccumulatedDepreciation())
+                .netBookValue(asset.getNetBookValue())
+                .status(asset.getStatus())
+                .notes(asset.getNotes())
+                .build();
     }
 
-    private AssetHistoryDTO mapToHistoryDTO(AssetHistory history) {
-        AssetHistoryDTO dto = new AssetHistoryDTO();
-        dto.setId(history.getId());
-        dto.setAssetId(history.getAssetId());
-        dto.setEventType(history.getEventType());
-        dto.setDescription(history.getDescription());
-        dto.setOldValue(history.getOldValue());
-        dto.setNewValue(history.getNewValue());
-        dto.setPerformedBy(history.getPerformedBy());
-        dto.setPerformedAt(history.getPerformedAt());
-        return dto;
+    private AssetHistoryDTO mapToHistoryDto(AssetHistory h) {
+        return AssetHistoryDTO.builder()
+                .id(h.getId())
+                .assetId(h.getAssetId())
+                .eventType(h.getEventType())
+                .description(h.getDescription())
+                .oldValue(h.getOldValue())
+                .newValue(h.getNewValue())
+                .performedBy(h.getPerformedBy())
+                .performedAt(h.getPerformedAt())
+                .build();
     }
 }
