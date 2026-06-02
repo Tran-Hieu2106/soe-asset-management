@@ -89,6 +89,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/audit-logs/**")
                     .hasAnyRole("SYSTEM_ADMIN", "FINANCE_AUDIT")
 
+                // Reference data for forms
+                .requestMatchers(HttpMethod.GET, "/api/lookups/**").authenticated()
+
                 // Everything else requires authentication
                 .anyRequest().authenticated()
             )

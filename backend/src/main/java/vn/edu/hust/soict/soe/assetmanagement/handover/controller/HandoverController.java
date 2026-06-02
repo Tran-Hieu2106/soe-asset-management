@@ -332,4 +332,15 @@ public class HandoverController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Đã từ chối yêu cầu bàn giao", updated));
     }
+
+    @GetMapping("/{id}/document")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER', 'APPROVING_AUTH')")
+    @Operation(summary = "Tải biên bản bàn giao PDF")
+    public ResponseEntity<byte[]> downloadDocument(@PathVariable UUID id) {
+        byte[] pdf = handoverService.downloadDocument(id);
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=\"handover-" + id + ".pdf\"")
+                .body(pdf);
+    }
 }

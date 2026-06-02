@@ -1,0 +1,575 @@
+
+Software Requirements Specification for
+STATE-OWNED ENTERPRISE ASSET AND INVENTORY MANAGEMENT SYSTEM
+Prepared by Le Viet Cuong, Dinh Ha Hai, Tran Trung Hieu, Hoang Quoc Huy, Nguyen Ngoc Linh 
+SE Qua Tao - HUST
+4-5-20226
+Version 1.0 approved
+
+
+Contents
+
+Revision History	1
+1 Introduction	4
+1.1 Purpose  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	4
+1.2 Document Conventions . . . . . . . . . . . . . . . . . . . . . . . . . . . .	4
+1.3 Intended Audience and Reading Suggestions . . . . . . . . . . . . . . . .	4
+1.4 Product Scope . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	5
+1.5 References . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	5
+2 Overall Description	6
+2.1 Product Perspective	. . . . . . . . . . . . . . . . . . . . . . . . . . . . .	6
+2.2 Product Functions	. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	6
+2.3 User Classes and Characteristics . . . . . . . . . . . . . . . . . . . . . . .	7
+2.4 Operating Environment	. . . . . . . . . . . . . . . . . . . . . . . . . . .	8
+2.5 Design and Implementation Constraints . . . . . . . . . . . . . . . . . . .	8
+2.6 User Documentation  . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	9
+2.7 Assumptions and Dependencies	10
+3 External Interface Requirements	11
+3.1 User Interfaces	11
+3.2 Hardware Interfaces	12
+3.3 Software Interfaces	13
+3.4 Communications Interfaces	13
+4 System Features	14
+4.1 User Authentication and Access Control	14
+4.1.1 Description and Priority	14
+4.1.2 Stimulus/Response Sequences	14
+4.1.3 Functional Requirements	15
+4.2 Fixed Asset Management	15
+4.2.1 Description and Priority	15
+4.2.2 Stimulus/Response Sequences	16
+4.2.3 Functional Requirements	16
+4.3 Consumable Stock Management	17
+4.3.1 Description and Priority	17
+4.3.2 Stimulus/Response Sequences	17
+4.3.3 Functional Requirements	17
+4.4 Handover and Liquidation	18
+4.4.1 Description and Priority	18
+4.4.2 Stimulus/Response Sequences	18
+4.4.3 Functional Requirements	19
+4.5 Reporting and Audit Trail	19
+4.5.1 Description and Priority	19
+4.5.2 Stimulus/Response Sequences	19
+4.5.3 Functional Requirements	20
+5 Other Nonfunctional Requirements	21
+5.1 Performance Requirements	21
+5.2 Safety Requirements	21
+5.3 Security Requirements	22
+5.4 Software Quality Attributes	23
+5.5 Business Rules	24
+6 Other Requirements	25
+6.1 Database Requirements	25
+6.2 Internationalisation Requirements	25
+6.3 Legal and Regulatory Requirements	26
+A Glossary	26
+B Analysis Models	28
+C To Be Determined List	29
+
+
+1 Introduction
+1.1 Purpose
+The purpose of this document is to specify the software requirements for the State-Owned Enterprise (SOE) Asset and Inventory Management System, Release Version 1.0. This Software Requirements Specification (SRS) provides a comprehensive description of the system's intended capabilities, constraints, and operational environment.
+   This document covers the entire scope of the unified platform, detailing both func- tional and non-functional requirements across all core modules. These capabilities encom- pass user authentication with role-based access control, fixed asset management including depreciation tracking, and consumable stock management for monitoring inventory, re- ceipts, and dispatches. Furthermore, it defines the necessary workflows for asset handover, liquidation, audit processes, and system-wide reporting. Ultimately, this SRS serves as the primary technical baseline and agreement between the development team (SE Qua Tao - HUST) and the project stakeholders to guide the subsequent architectural design, implementation, and testing phases.
+
+1.2 Document Conventions
+This document employs several typographical and structural conventions to ensure clarity and consistency across all modules. Bold text is utilized to designate specific user roles, such as System Admin or Warehouse Officer, as well as exact graphical user interface elements and button names. Italicized text is used to indicate core business terminology, database entities, and specific asset states within a workflow, such as the liquidated or depreciated status of an item.
+   For accurate traceability and project management, all functional requirements are uniquely identified using a module-specific prefix followed by a sequential two-digit num- ber. The established module prefixes are FA for Fixed Assets, CS for Consumable Stock, HL for Handover and Liquidation, and RP for Reporting and Audit Trail. For exam- ple, the initial functional requirement for the Fixed Assets module is formally labeled as FA-01.
+
+1.3 Intended Audience and Reading Suggestions
+The SRS is intended for developers, project evaluators, system administrators, and do- main experts (such as finance and audit personnel).
+   The development team (SE Qua Tao) should use this document as the primary tech- nical blueprint and read it in its entirety, paying special attention to the specific system features and nonfunctional constraints to guide the implementation of their assigned modules.
+   The project supervisor is advised to review the overall description for project scope, followed by the specific functional requirements to verify alignment with the initial project proposal. System administrators and future maintainers should focus on the operating environment and security requirements to thoroughly understand deployment constraints and access control structures.
+   Finally, finance officers and auditors should examine the functional requirements re- garding fixed assets and reporting to ensure the system logic strictly complies with Viet- namese Accounting Standards (VAS) and relevant ministerial circulars.
+
+1.4 Product Scope
+The State-Owned Enterprise Asset and Inventory Management System is a centralized, web-based platform designed to standardize the registration, tracking, and disposal of state-funded property. It addresses the gap in affordable, regulation-compliant software by replacing disconnected departmental spreadsheets and paper-based registers with a single, unified digital source of truth.
+   The primary objectives of the system are to preserve state capital, significantly reduce administrative burdens during audit preparations, and ensure strict compliance with Viet- namese regulatory frameworks and accounting standards. Key business benefits include the automation of error-prone depreciation calculations, the enforcement of structured approval workflows with strict separation of duties, and the provisioning of real-time visibility into departmental budget consumption.
+   For this Version 1.0 release, the project scope is bounded to a single-organization, on- premise deployment model tailored to standard government server infrastructure. The system fully encompasses User Authentication (RBAC), Fixed Asset Management, Con- sumable Stock Management, Handover and Liquidation workflows, and Reporting. Fea- tures such as multi-tenancy, mobile applications, direct API integration with external ministry portals or accounting systems, and QR/barcode scanning hardware are explic- itly out of scope for this initial release and are designated for future enhancements.
+
+1.5 References
+The following regulatory documents, standards, and guidelines are foundational to the business logic and constraints specified in this document:
+
+1. Th ng tu 45/2013/TT-BTC: Circular issued by the Ministry of Finance of Viet- nam, guiding the classification, management, use, and depreciation calculation of fixed assets in state-owned organisations. This circular defines the asset categories, permitted useful life ranges, and approved depreciation methods (straight-line and declining-balance) that the system's depreciation engine must implement.
+2. Ngh? d?nh 151/2017/N -CP: Government Decree detailing the Law on the management and use of state capital invested in production and business at enter- prises. This decree governs the formal procedures for asset handovers, liquidations, and capital preservation reporting that the system's handover and liquidation work- flows must enforce.
+3. Vietnamese Accounting Standards (VAS): Specifically VAS 03 (Tangible Fixed Assets) and VAS 04 (Intangible Fixed Assets), issued by the Ministry of Finance, governing asset valuation, historical cost recording, and financial statement presen- tation. All financial calculations performed by the system must conform to these standards.
+4. Ngh? d?nh 30/2020/N -CP: Government Decree on state administrative doc- ument management, defining the official formatting requirements for state-issued documents. The handover records (Bi n b?n b n giao) and liquidation documents generated by the system must comply with the document standards prescribed by this decree.
+
+5. Ngh? d?nh 13/2023/N -CP: Government Decree on personal data protection. This decree governs the security, access control, and encryption requirements ap- plicable to personal information of officers and staff stored and processed by the system.
+6. IEEE Std 830-1998: IEEE Recommended Practice for Software Requirements Specifications. This document follows the structure and conventions defined in this standard.
+
+2 Overall Description
+2.1 Product Perspective
+The State-Owned Enterprise Asset and Inventory Management System is a new, green- field software development project. It serves as a direct replacement for the fragmented, manual, and spreadsheet-based tracking methods currently prevalent across various SOE departments.
+   The product is a self-contained, web-based application designed explicitly for a single- organization, on-premise deployment model. This localized deployment strategy aligns with strict SOE IT governance policies that frequently restrict the cloud hosting of sen- sitive state financial data.
+   While the Version 1.0 system operates independently without requiring active connec- tions to external systems, its backend architecture utilizes RESTful APIs. This design choice establishes a foundation for future phases, which anticipate direct software inter- faces with external enterprise accounting systems (such as MISA or Fast Accounting) and Ministry of Finance reporting portals.
+
+2.2 Product Functions
+The system provides five major functional areas. The following summarises the high-level capabilities of each:
+
+  User Authentication and Access Control. The system authenticates all users via a secure login mechanism using JSON Web Tokens (JWT) and enforces role- based access control (RBAC) throughout the platform. Each user is assigned one of five defined roles and scoped to one or more managing units. All API endpoints are protected and return role-appropriate data only.
+  Fixed Asset Management. The system maintains comprehensive digital profiles for all state-owned fixed assets, including technical parameters, historical cost, ac- quisition details, and funding source. It automatically calculates and tracks depre- ciation using the straight-line method in accordance with Th ng tu 45/2013/TT- BTC, maintains a full immutable lifecycle history for every asset, and enforces status transitions (In Use, Under Maintenance, Idle, Transferred, Liquidated) with timestamped, user-attributed records.
+  Consumable Stock Management. The system manages a catalogue of consum- able materials with technical specifications and standardised units of measurement. It records every stock receipt and issuance as an immutable transaction, computes
+
+real-time stock balances per material per storage location, and aggregates depart- mental consumption per period to support budget monitoring and procurement planning.
+  Handover and Liquidation Workflows. The system provides structured, multi- step approval workflows for transferring fixed assets between managing units and for formally disposing of assets through liquidation. Each workflow step is timestamped and user-attributed, enforcing separation of duties throughout. Completed work- flows generate official printable records compliant with Ngh? d?nh 30/2020/N -CP document standards.
+  Reporting and Audit Trail. The system maintains an immutable, append-only audit log capturing every create, update, status-change, and approval event across all modules. It provides filterable asset inventory reports and departmental stock consumption reports, both exportable to Excel and PDF formats for submission to finance officers and regulatory bodies.
+
+2.3 User Classes and Characteristics
+The system defines five user classes, each corresponding to a distinct organisational role within a Vietnamese state-owned enterprise. Access privileges are explicitly granted per role; no role inherits permissions from another.
+
+  System Administrator (R-01). Technical users responsible for managing user accounts, assigning roles, configuring managing units, and maintaining system set- tings. System administrators have full access to audit logs but are explicitly re- stricted from creating or modifying operational asset and stock records. This role is occupied by a small number of IT staff and is used infrequently for day-to-day operations. Users in this class are expected to have strong technical literacy.
+  Asset Manager (R-02). The primary operational users of the fixed asset module. Asset managers register and maintain fixed asset digital profiles, initiate handover and liquidation workflows, and monitor asset lifecycle histories within their assigned managing unit. This class uses the system frequently and requires familiarity with Vietnamese state asset management regulations, including Th ng tu 45/2013/TT- BTC. They are the most critical user class for the Fixed Asset module.
+  Warehouse / Stock Officer (R-03). Operational users responsible for managing the consumable materials catalogue, recording stock receipts from procurement, and processing stock issuances to requesting departments. Stock officers use the system daily and must not be permitted to approve their own transactions, as required by the separation of duties constraint. General computer literacy is sufficient for this role.
+  Approving Authority (R-04). Managerial users who approve stock issue re- quests, asset handover initiations, and liquidation requests within their management scope. This class interacts with the system primarily through notification-driven approval queues and summary dashboards. Usage is moderate and action-oriented rather than data-entry-oriented. Users in this class require no technical expertise.
+
+  Finance & Audit Officer (R-05). Read-only users who access depreciation schedules, asset valuations, stock consumption summaries, and the audit trail for financial review and regulatory reporting purposes. This class generates statutory reports for submission to internal governance bodies and external regulatory au- thorities including the Ministry of Finance. Users in this class have expertise in Vietnamese accounting standards (VAS) and audit procedures. They have no write access to any operational records.
+
+2.4 Operating Environment
+The system is designed to operate within the standard IT infrastructure of a Vietnamese state-owned enterprise. The following describes the target operating environment for both server-side and client-side components:
+  Server environment. The application server must run on a standard on-premise Linux server (Ubuntu 22.04 LTS or equivalent). The backend requires Java 17 or higher and is packaged as a self-contained Spring Boot 3 executable JAR. The database server runs PostgreSQL 15 or higher. Both the application and database may be deployed as Docker containers using the provided docker-compose.yml configuration, which standardises the runtime environment across development and production deployments.
+  Client environment. The frontend is a single-page web application delivered through the browser. It must function correctly on current versions of Google Chrome, Mozilla Firefox, and Microsoft Edge running on Windows 10 or higher. The minimum supported screen resolution is 1366   768 pixels. No browser exten- sions or plugins are required. Mobile browser support is not in scope for Version 1.0.
+  Network environment. The system must operate correctly on standard office local area network conditions within SOE premises. The frontend communicates with the backend exclusively over HTTP/HTTPS. All data in transit must be encrypted using TLS 1.2 or higher when deployed in production. The system must not depend on public internet connectivity for any core operational function.
+  Runtime dependencies. The backend depends on the following third-party li- braries at runtime: Spring Boot 3 (web, security, data JPA, validation), Spring Security with JWT (authentication and RBAC), Flyway (database migration man- agement), Apache POI (Excel report generation), and iText or OpenHTMLtoPDF (PDF document generation). The frontend depends on React 18, TypeScript, Vite, Ant Design, Axios, and Zustand. All dependencies are open-source and carry no per-user licence cost.
+
+2.5 Design and Implementation Constraints
+The following constraints limit the design and implementation options available to the development team and must be respected throughout all phases of the project:
+  Regulatory compliance. All depreciation logic must implement the straight-line method as the mandatory baseline in accordance with Th ng tu 45/2013/TT-BTC.
+
+Asset categories and useful life ranges must conform to the classifications defined in that circular. Handover and liquidation document formats must comply with Ngh? d?nh 30/2020/N -CP. These requirements are non-negotiable and override any design preference for simplicity.
+  On-premise deployment only. The system must be fully deployable on standard government server hardware running Linux without dependency on any public cloud service (AWS, GCP, Azure, or equivalent). All runtime dependencies must be self- hostable.
+  Vietnamese language interface. All user-facing content - including form la- bels, button text, validation messages, error notifications, table headers, and gen- erated document text - must be presented in Vietnamese. English is permitted only in system-level identifiers such as API field names, database column names, and developer-facing code documentation.
+  Open-source technology stack. The system must be built exclusively using open-source or freely available tools and libraries. No proprietary commercial soft- ware licences that incur per-user or per-deployment costs may be introduced into the stack.
+  Separation of duties enforcement. The constraint that no single user may both initiate and approve the same transaction must be enforced at the application service layer, not solely through UI controls. This applies to stock issuances, asset handover requests, and liquidation requests without exception.
+  Append-only audit log. The audit log table must be designed and enforced as append-only at the database level using PostgreSQL rules or triggers. No application-level operation, including administrator actions, may update or delete an existing audit log entry.
+  Server-side financial computation. All financial calculations including depreci- ation amounts, net book values, and stock valuations must be performed exclusively on the server side. Client-side calculation of any financial figure is not permitted.
+  Single-organisation scope. Version 1.0 supports a single organisation with mul- tiple internal managing units. Multi-tenancy - serving multiple independent SOEs from a single installation - is explicitly out of scope and must not influence the data model design.
+
+2.6 User Documentation
+The following documentation components will be delivered alongside the Version 1.0 software release:
+  API Reference (docs/api-spec.md). A comprehensive specification of all REST API endpoints exposed by the backend, including HTTP methods, request body schemas, response structures, authentication requirements, and example payloads. This document is maintained in Markdown format within the project repository and serves as the integration contract between the backend and frontend during development.
+
+  Database Schema Reference (docs/database-schema.md). A description of all database tables, columns, data types, constraints, and foreign key relationships. Includes the rationale for key design decisions such as the append-only audit log structure and the computed stock balance approach.
+  Deployment Guide (docs/deployment-guide.md). Step-by-step instructions for deploying the system on a Linux server using Docker Compose, including envi- ronment variable configuration, database initialisation via Flyway, and application startup verification.
+  Test Plan (docs/test-plan.md). A structured plan covering all integration test scenarios, including the test cases, expected inputs, expected outputs, and pass/fail criteria for each core user journey across all modules.
+  Project Report. A comprehensive academic report covering the requirements analysis, system architecture, module design, implementation details, and test re- sults for all five modules, prepared in accordance with HUST SoICT project sub- mission requirements.
+All documentation is written in English, with the exception of Vietnamese terminology used for regulatory references and generated document templates.
+
+2.7 Assumptions and Dependencies
+Assumptions The following factors are assumed to be true for the duration of this project. If any assumption proves incorrect, the requirements or scope defined in this document may need to be revised:
+  The target organisation operates a single managing hierarchy with clearly defined departments and unit codes. The system is not required to handle organisations with ambiguous or overlapping unit boundaries.
+  All staff who will use the system possess at least basic computer literacy, including the ability to navigate a web browser, fill in online forms, and interpret tabular data. No specialist technical training is assumed.
+  The server on which the system is deployed runs a compatible Linux distribution and has Docker and Docker Compose installed, or the Java 17 runtime and PostgreSQL 15 installed natively.
+  Asset financial data entered into the system (original cost, acquisition date, useful life) is accurate and has been verified by the finance or asset management team prior to entry. The system performs calculations based on the data provided and does not independently verify the accuracy of input values.
+  The organisation's network infrastructure provides stable local area network con- nectivity between client machines and the application server during working hours.
+  The BCrypt password hashing algorithm (strength factor 10) provides sufficient security for the deployment environment. If the organisation requires a higher strength factor, this may be configured in the application properties without code changes.
+
+Dependencies The following external factors are dependencies of this project. Delays or changes in any dependency could affect the project timeline or deliverables:
+
+  Spring Boot 3 / Java ecosystem. The backend is entirely dependent on the Spring Boot 3 framework and its associated libraries. Any breaking changes in these libraries during the development period would require remediation.
+  Ant Design component library. The frontend relies on Ant Design for all UI components. The visual consistency and accessibility of the interface depend on this library's continued availability and compatibility with React 18.
+  PostgreSQL 15. The database layer depends on PostgreSQL-specific features including gen_random_uuid(), append-only table rules, and JSONB support for audit log value storage. Migration to a different database engine would require significant rework.
+  Flyway migration tool. The database schema lifecycle is managed entirely through Flyway versioned migration scripts. The integrity of the database schema depends on Flyway executing migrations in the correct order without interruption.
+  Regulatory framework stability. The business logic of the system is calibrated to the current versions of Th ng tu 45/2013/TT-BTC and Ngh? d?nh 151/2017/N - CP. If these regulations are amended during or after the development period, cor- responding updates to the depreciation engine and workflow logic may be required.
+
+3 External Interface Requirements
+3.1 User Interfaces
+The system provides a web-based graphical user interface accessible through a standard desktop browser. The following conventions and constraints govern the design and be- haviour of all user-facing screens:
+
+  Framework and component library. All user interface screens are built using React 18 with TypeScript and the Ant Design component library. Ant Design's pre-built components - including tables, forms, modals, date pickers, status tags, and notification drawers - are used consistently across all modules to ensure a unified visual style and interaction pattern throughout the application.
+  Language. The entire user interface must be presented in Vietnamese. All form field labels, button text, table column headers, placeholder text, validation error messages, status labels, and notification messages must use Vietnamese terminology. English is permitted only in system-level identifiers visible to developers (e.g. API field names) and is not to appear in any user-facing element.
+  Layout. The application uses a persistent sidebar navigation layout. The left sidebar displays module links filtered by the authenticated user's role - users only see navigation items for modules they have permission to access. The top bar displays the current user's name, role, and assigned managing unit. The main content area renders the active page.
+
+  Role-based visibility. All UI elements - including buttons, action menus, and navigation links - must be conditionally rendered based on the authenticated user's role. For example, the T?o t i s?n m?i (Register New Asset) button is visible only to users with the Asset Manager role. Approval action buttons appear only to users with the Approving Authority role.
+  Forms and validation. All data entry forms must include inline validation with immediate feedback. Required fields must be clearly marked. Validation error messages must be displayed in Vietnamese adjacent to the offending field. Forms must prevent submission while any required field is empty or any field contains an invalid value.
+  Feedback and notifications. Every user action that triggers a server-side oper- ation must provide visible feedback: a loading indicator during the request, and a success or error notification upon completion. Destructive actions (status changes, approvals, liquidation submissions) must require confirmation through a modal di- alog before execution.
+  Tables and pagination. All list views use paginated tables with a default page size of 20 rows. Tables must support column-level filtering and sorting where specified. Export buttons for applicable reports are placed in the page header area adjacent to the report title.
+  Responsive design scope. The interface is optimised for desktop screens at a minimum resolution of 1366   768 pixels. Mobile and tablet responsive design is out of scope for Version 1.0.
+  UI specification reference. Detailed screen layouts, wireframes, and component- level design decisions are documented in the UI/UX design chapter of the project report, maintained separately from this SRS.
+
+3.2 Hardware Interfaces
+The system does not directly interface with any physical hardware devices in Version 1.0. The following applies:
+
+  Server hardware. The application is hardware-agnostic at the software level. It requires a server capable of running a Linux operating system, a Java 17 runtime environment, and a PostgreSQL 15 database instance. Minimum recommended server specifications are 4 CPU cores, 8 GB RAM, and 100 GB storage, though actual requirements will scale with the volume of asset and transaction records.
+  Client hardware. Client devices require only a standard desktop or laptop com- puter with a modern web browser and network connectivity to the application server. No specialist hardware is required on the client side.
+  Out of scope. QR code scanners, barcode readers, label printers, and other phys- ical asset tagging hardware are explicitly out of scope for Version 1.0. Integration with such devices is documented as a future enhancement.
+
+3.3 Software Interfaces
+The following describes the software components and interfaces with which the system interacts:
+
+  Frontend to backend (REST API). The React frontend communicates exclu- sively with the Spring Boot backend via a RESTful HTTP API. All requests and responses use the JSON data format. The API base URL is configurable via the VITE_API_BASE_URL environment variable in the frontend. API documentation is maintained in docs/api-spec.md within the project repository and is additionally exposed at runtime via Swagger UI at /swagger-ui.html.
+  Backend to database (JDBC / JPA). The Spring Boot backend communicates with the PostgreSQL 15 database using Spring Data JPA with Hibernate as the ORM provider. All database schema changes are managed through Flyway ver- sioned migration scripts. The JDBC connection parameters (host, port, database name, username, password) are configured via application.yml and must not be hardcoded in the source code.
+  Flyway migration tool. Flyway is integrated into the Spring Boot application
+and executes automatically on startup. It reads migration scripts from src/main/resources/db/m in version order (V1, V2, . . . ) and applies any that have not yet been executed
+against the target database. This interface ensures that the database schema is always consistent with the application version.
+  Apache POI (Excel export). The ExportService uses the Apache POI li- brary to generate .xlsx files for asset inventory and stock consumption reports. The generated files are returned as binary HTTP responses with the appropriate Content-Type: application/vnd.openxmlformats header.
+  PDF generation library. The system uses iText or OpenHTMLtoPDF to gener- ate PDF files for official handover records (Bi n b?n b n giao) and asset inventory report exports. Generated PDFs are returned as binary HTTP responses with the Content-Type:  application/pdf header.
+  Springdoc OpenAPI / Swagger UI. The backend integrates springdoc-openapi to automatically generate and serve an OpenAPI 3.0 specification from the anno-
+tated controller classes. The Swagger UI is accessible at http://localhost:8080/swagger-ui.ht during development and serves as the live API reference for the frontend developer
+(Tr?n Trung Hi?u, M5).
+  External accounting systems (future). Version 1.0 does not implement active integration with external accounting software such as MISA or Fast Accounting. The RESTful API architecture is designed to support such integration in future releases. No direct software interface with external systems exists in the current version.
+
+3.4 Communications Interfaces
+  HTTP/HTTPS protocol. All communication between the frontend client and the backend API server uses the HTTP/1.1 protocol. In development, plain HTTP
+
+on port 8080 (backend) and port 5173 (frontend) is used. In production deployment, all traffic must be served over HTTPS using TLS 1.2 or higher, enforced at the reverse proxy or load balancer level.
+  Cross-Origin Resource Sharing (CORS). The backend is configured via WebConfig.java to explicitly permit cross-origin requests from the frontend origin (http://localhost:5173 in development). In production, the allowed origin must be updated to the deployed
+frontend URL. CORS configuration must not use wildcard (*) origins in production.
+  Authentication over HTTP. The JWT token issued upon login is transmitted in the Authorization: Bearer {token} HTTP header on all subsequent authen- ticated requests. Tokens must not be transmitted as URL query parameters. In production, the HTTPS requirement ensures tokens are never exposed in plaintext over the network.
+  Data format. All API request bodies and response payloads use the JSON format with UTF-8 encoding. Binary responses (Excel and PDF file downloads) use the appropriate binary content types as described in Section 3.3.
+  Network scope. The system communicates exclusively within the organisation's local area network. No outbound internet connections are made by the application in Version 1.0. External email notifications, SMS alerts, and ministry portal API calls are out of scope for this release.
+
+4 System Features
+This section specifies the functional requirements of the State-Owned Enterprise Asset and Inventory Management System, organised by system feature. Each feature corre- sponds to a major functional module of the system. Requirements are identified using module-specific prefixes: FA (Fixed Assets), CS (Consumable Stock), HL (Handover and Liquidation), and RP (Reporting and Audit Trail). Priority levels are assigned as Must (mandatory for Version 1.0), Should (important but deferrable), or Nice (optional enhancement).
+
+4.1 User Authentication and Access Control
+4.1.1 Description and Priority
+This feature provides secure user authentication and role-based access control across the entire platform. It is the foundational capability upon which all other modules depend. Without it, no other feature can function securely.
+Priority: High. This feature must be fully operational before any other module is
+accessible.
+
+4.1.2 Stimulus/Response Sequences
+  A user navigates to the system URL and is presented with the login screen. The user enters their username and password and submits the form. If credentials are valid, the system issues a JWT token and redirects the user to their role-appropriate
+
+dashboard. If credentials are invalid, the system displays a Vietnamese-language error message and does not grant access.
+  An authenticated user attempts to access a page or API endpoint outside their role's permitted scope. The system intercepts the request, returns an HTTP 403 Forbidden response, and displays an access denied message. No data from the restricted resource is returned.
+  An administrator navigates to user management, creates a new user account, assigns a role and managing unit, and saves. The new user can immediately log in with the assigned credentials and sees only the data and functions permitted by their role.
+  A JWT token expires during an active session. The system detects the expired token on the next request, invalidates the session, and redirects the user to the login screen.
+
+4.1.3 Functional Requirements
+AUTH-01 The system must authenticate users via a username and password login form. On successful authentication, the system must issue a signed JSON Web Token (JWT) containing the user's identifier, role, and assigned managing unit. Priority: Must. AUTH-02 The system must enforce role-based access control (RBAC) on all API endpoints and UI routes. Each endpoint must only be accessible to the roles explicitly permitted for that operation. Requests from users with insufficient roles must return HTTP 403 Forbidden. Priority: Must.
+AUTH-03  The system must scope all data queries to the managing unit(s) assigned
+to the authenticated user. A user must not be able to view or modify records belonging to a managing unit outside their assignment, unless explicitly granted cross-unit access by a System Administrator. Priority: Must.
+AUTH-04  The system must allow a System Administrator to create, deactivate, and
+reassign user accounts and role assignments through a user management interface. De- activated accounts must be immediately unable to authenticate. Priority: Must.
+AUTH-05  All passwords must be stored using the BCrypt hashing algorithm with
+a minimum strength factor of 10. Plaintext passwords must never be stored or logged anywhere in the system. Priority: Must.
+AUTH-06  The system must provide a GET /api/users/me endpoint that returns the
+authenticated user's profile including their full name, role, and assigned managing unit(s).
+Priority: Must.
+
+4.2 Fixed Asset Management
+4.2.1 Description and Priority
+This feature enables the registration, tracking, depreciation, and lifecycle management of all state-owned fixed assets within the organisation. It is the core module of the system and directly addresses the regulatory obligations of Vietnamese SOEs under Th ng tu 45/2013/TT-BTC and Vietnamese Accounting Standards (VAS).
+Priority: High. This feature represents the primary value proposition of the system
+for asset managers and finance officers.
+
+4.2.2 Stimulus/Response Sequences
+  An Asset Manager navigates to the fixed asset registration screen, fills in the asset profile form (code, name, category, unit, technical parameters, original cost, acqui- sition date, useful life, funding source), and submits. The system saves the asset, initialises the depreciation schedule, writes an entry to the asset lifecycle history, and writes an entry to the system audit log.
+  An Asset Manager opens an existing asset record and changes its status from In Use to Under Maintenance, providing a reason. The system records the status change with a timestamp and the user's identity, appends a new entry to the asset lifecycle history, and updates the audit log.
+  A Finance Officer opens the asset detail screen. The system displays the current accumulated depreciation, annual depreciation amount, remaining book value, and depreciation end date, computed automatically from the asset's original cost, useful life, and acquisition date.
+  An Asset Manager opens the lifecycle history panel for an asset. The system displays a complete, chronological, read-only log of every change ever made to that asset record, including the field changed, the old value, the new value, the user who made the change, and the timestamp.
+
+4.2.3 Functional Requirements
+FA-01  The system must allow an Asset Manager to create a digital profile for a fixed asset containing the following mandatory fields: asset code (unique), asset name, as- set category (per Th ng tu 45/2013/TT-BTC classifications), managing unit, technical specifications, original cost (nguy n gi  ), acquisition date, source of funding, useful life in years, and physical location. Priority: Must.
+FA-01a  The system must provide filterable and paginated list and detail views for all
+assets within the authenticated user's managing unit scope. Filters must include asset category, operational status, and acquisition date range. Priority: Must.
+FA-02  The system must automatically compute the following depreciation values for
+each asset using the straight-line method in accordance with Th ng tu 45/2013/TT-BTC: annual depreciation amount, accumulated depreciation to date, net book value (gi  tr? c n l?i ), annual depreciation rate (as a percentage), and projected depreciation end date. These values must be recomputed server-side whenever the asset's financial parameters are updated. Priority: Must.
+FA-02a  All depreciation calculations must be performed exclusively on the server
+side. The client must only display values returned by the API and must not perform any financial computation independently. Priority: Must.
+FA-03  Each asset must carry one of the following operational statuses at all times:
+In Use, Under Maintenance, Idle, Transferred, or Liquidated. Status changes must be recorded with the new status value, the reason for the change, the timestamp, and the username of the user who made the change. Priority: Must.
+FA-04  The system must maintain a complete, immutable lifecycle history for every
+asset. Every creation, field update, status change, revaluation, and transfer event must append a new record to the asset history containing: event type, description, old value (as
+
+a JSON representation of the changed fields), new value, performing user, and timestamp. Existing history records must never be modified or deleted. Priority: Must.
+
+4.3 Consumable Stock Management
+4.3.1 Description and Priority
+This feature manages the full lifecycle of consumable materials within the organisation
+- from catalogue registration through stock receipts, departmental issuances, and bal- ance tracking. It provides the data foundation for departmental budget monitoring and procurement planning.
+Priority: High. This feature is essential for warehouse officers and approving au-
+thorities managing operational budgets.
+
+4.3.2 Stimulus/Response Sequences
+  A Warehouse Officer navigates to the material catalogue, creates a new material entry with a unique code, name, category, unit of measurement, technical specifi- cations, and reference unit price, and saves. The material is immediately available for stock transactions.
+  A Warehouse Officer records a stock receipt for a material. They enter the quantity received, the document reference number (procurement order or delivery note), the date, and the unit price. The system saves the transaction and the real-time stock balance for that material at that storage location is immediately updated to reflect the receipt.
+  A Warehouse Officer processes a stock issuance request from a department. They select the material, enter the quantity, link the transaction to the requesting depart- ment and the requesting staff member, and enter the issue slip reference number. The system saves the transaction and deducts the quantity from the real-time stock balance. The system does not permit the same user to both request and approve the issuance.
+  A Finance Officer views the departmental consumption summary for a selected period. The system returns the total quantity and total value of each material issued to each department during that period, aggregated from all stock issuance transactions.
+
+4.3.3 Functional Requirements
+CS-01 The system must maintain a catalogue of consumable materials. Each catalogue entry must contain: material code (unique), name, category, unit of measurement (e.g., C i, Kg, L t, H?p, Ream), technical specifications, supplier reference, and reference unit price. Authorised users must be able to create, update, and deactivate catalogue entries. Priority: Must.
+CS-02  The system must record every stock receipt (stock-in) and stock issuance (stock-
+out) as an immutable transaction. Each transaction record must contain: material iden- tifier, storage location, transaction type (RECEIPT or ISSUE), quantity, unit of mea- surement, unit price at time of transaction, total value, reference document number,
+
+document date, performing user, and timestamp. Transaction records must not be ed- itable or deletable after creation. Priority: Must.
+CS-03  The system must compute and display the current stock balance for each ma-
+terial at each storage location in real time. The balance must be derived exclusively from the sum of all receipt quantities minus the sum of all issue quantities recorded in the transaction table. Stock balance must not be stored as a column; it must be a computed value. Priority: Must.
+CS-04  Each stock issuance transaction must be linked to a requesting department
+(managing unit) and a requesting staff member. The system must aggregate total quan- tities and total values issued per department per material per configurable time period, and expose this data through a dedicated departmental usage query endpoint. Priority: Must.
+
+4.4 Handover and Liquidation
+4.4.1 Description and Priority
+This feature provides formalised, multi-step approval workflows for transferring fixed as- sets between managing units and for permanently disposing of assets through liquidation. It enforces the regulatory requirements of Ngh? d?nh 151/2017/N -CP and ensures that all asset movements are documented with an irrecoverable audit trail.
+Priority: High.  Without this feature, the system cannot satisfy the transparency
+and compliance requirements mandated for state-owned asset management.
+
+4.4.2 Stimulus/Response Sequences
+  An Asset Manager initiates a handover request for an asset, specifying the receiving unit, the planned handover date, the reason, and the asset's current condition. The system creates the request in Draft status and notifies the Approving Authority. The initiating user cannot approve their own request.
+  The Approving Authority reviews the pending handover request, adds approval notes, and approves it. The system transitions the request to Approved status, records the approver's identity and timestamp, and notifies the receiving unit to confirm receipt.
+  The receiving unit confirms receipt of the asset. The system transitions the re- quest to Completed status, updates the asset's managing unit to the receiving unit, changes the asset status to Transferred, appends a Transferred event to the asset lifecycle history, and writes entries to the audit log.
+  A completed handover request is opened by any authorised user. The system dis- plays a generated official handover record (Bi n b?n b n giao) formatted in com- pliance with Ngh? d?nh 30/2020/N -CP, available for download as a PDF.
+  An Asset Manager submits a liquidation request for an asset, providing justifica- tion, the current condition, the estimated market value, and the proposed disposal method (auction, scrap, or donation). The request enters a two-step approval chain. Upon final director-level approval, the system permanently sets the asset status to Liquidated and closes the asset record.
+
+4.4.3 Functional Requirements
+HL-01 The system must provide a structured multi-step handover workflow for trans- ferring a fixed asset between managing units. The workflow must enforce the following sequence: (1) Asset Manager initiates the request; (2) Approving Authority approves the request; (3) receiving unit confirms receipt; (4) system finalises the record update. Each step must be timestamped and attributed to the performing user. The system must en- force that the initiating user cannot be the approving user for the same request. Priority: Must.
+HL-01a  Upon completion of a handover workflow, the system must automatically:
+update the asset's managing unit to the receiving unit, set the asset's operational status to Transferred, append a Transferred event to the asset lifecycle history (FA-04), and write an entry to the system audit log (RP-01). These updates must be executed atomically within a single database transaction. Priority: Must.
+HL-02  The system must provide a liquidation request and approval workflow. The
+workflow must enforce the following two-step approval chain: (1) Asset Manager initi- ates the request with mandatory fields including justification, asset condition, estimated current market value, and proposed disposal method (Auction, Scrap, or Donation); (2) Approving Authority reviews and approves or rejects. Each approval step must be times- tamped and attributed to the performing user. Priority: Must.
+HL-02a  Upon approval and completion of a liquidation workflow, the system must
+automatically set the asset's operational status to Liquidated, record the final disposal value, append a Liquidated event to the asset lifecycle history (FA-04), and write an entry to the system audit log (RP-01). The asset record must become read-only after this point; no further modifications to the asset profile are permitted. Priority: Must.
+HL-03  The system must generate a printable and downloadable official document for
+completed handover and liquidation transactions. The handover document (Bi n b?n b n giao) must include: asset code and name, transferring unit, receiving unit, asset condition at time of transfer, handover date, net book value at time of transfer, and the names and roles of all approving parties. The document must be exportable as a PDF file. Priority: Must.
+
+4.5 Reporting and Audit Trail
+4.5.1 Description and Priority
+This feature provides an immutable system-wide audit log and a set of filterable, ex- portable reports covering fixed asset inventory and departmental stock consumption. It is the primary interface for Finance and Audit Officers and supports regulatory compli- ance verification during ministerial inspections.
+Priority: High. The immutable audit log (RP-01) is a cross-cutting requirement that
+must be operational from the first increment.
+
+4.5.2 Stimulus/Response Sequences
+  Any action is performed anywhere in the system (asset created, status changed, stock issued, handover approved, user logged in). The system automatically and synchronously writes an entry to the audit log table containing the module, action type, affected record identifier, performing user, IP address, before value, after
+
+value, and timestamp. The write is part of the same database transaction as the triggering action.
+  A Finance Officer navigates to the asset inventory report screen, applies filters for managing unit and asset status, and requests the report. The system returns a paginated table of matching assets displaying original cost, accumulated depreci- ation, and net book value. The officer clicks Export and downloads an Excel file containing the complete filtered dataset.
+  A Finance Officer generates a departmental stock consumption report for a selected period. The system returns a summary table showing total quantity and total value of each material consumed by each department during the period, derived from stock issuance transactions (CS-04).
+  An auditor opens the audit log viewer, filters by module (e.g., ASSET) and date range, and reviews the results. Every event is displayed in chronological order with full before/after values. The auditor cannot modify any log entry.
+
+4.5.3 Functional Requirements
+RP-01 The system must maintain an immutable, append-only audit log. Every create, update, delete, status-change, approval, rejection, login, and export event across all mod- ules must synchronously write one entry to the audit log. Each entry must contain: mod- ule name, action type, affected record identifier, affected record code (human-readable), performing username, user identifier, client IP address, a JSON representation of the field values before the action (null for create events), a JSON representation of the field values after the action (null for delete events), a human-readable description of the event, and the timestamp of the event. No application-level mechanism may update or delete an existing audit log entry. Priority: Must.
+RP-01a  The audit log table must be protected against modification at the database
+level using PostgreSQL rules or triggers that silently discard any UPDATE or DELETE statement targeting the audit log table. This protection operates independently of the application layer. Priority: Must.
+RP-02  The system must provide a filterable asset inventory report available to Finance
+& Audit Officers and Approving Authorities. The report must be filterable by managing unit, asset category, operational status, and acquisition date range. For each asset in the result set, the report must display: asset code, asset name, category, managing unit, original cost, accumulated depreciation, net book value, acquisition date, and operational status. The report must be exportable to both Microsoft Excel (.xlsx) and PDF formats. Priority: Must.
+RP-03  The system must provide a departmental stock consumption report available
+to Finance & Audit Officers. The report must be configurable by time period (start date and end date). For each department within the user's scope, the report must display: material code, material name, unit of measurement, total quantity issued, and total value of issues during the selected period. The report must be exportable to Microsoft Excel (.xlsx) format. Priority: Must.
+
+5 Other Nonfunctional Requirements
+5.1 Performance Requirements
+The following performance requirements apply to the system under normal concurrent usage conditions within the organisation's local area network environment:
+
+  Response time. All standard page loads, list queries, and form submissions must return a response within 2 seconds under normal operating conditions. This applies to paginated asset lists, stock balance queries, departmental consumption aggrega- tions, and audit log retrievals. Report generation with export (Excel or PDF) is permitted up to 10 seconds given the additional computation and file assembly involved.
+  Concurrent users. The system must support a minimum of 50 concurrent authen- ticated users without degradation of response time below the 2-second threshold. The architecture must be capable of scaling to 200 concurrent users through vertical scaling of the application server without requiring architectural changes.
+  Data volume. The system must maintain acceptable query performance with a database containing at least 50,000 asset records, 500,000 stock transaction records, and 1,000,000 audit log entries. All frequently queried columns must be covered by appropriate database indexes as defined in the Flyway migration scripts.
+  Report generation. Asset inventory and stock consumption reports must be gen- erated and returned within 10 seconds for datasets of up to 10,000 rows. Export operations must not block other users' requests; they must be processed asyn- chronously if generation time exceeds 5 seconds.
+  Availability. The system must be available during all standard working hours (07:00-18:00, Monday to Saturday). Planned maintenance windows must be sched- uled outside these hours. The target uptime during working hours is 99.5%, per- mitting a maximum of approximately 3.6 hours of unplanned downtime per month.
+
+5.2 Safety Requirements
+The system manages state financial data and legally significant asset records. The follow- ing safety requirements mitigate the risk of data loss, corruption, or irreversible erroneous actions:
+
+  Data backup. Automated daily backups of the PostgreSQL database must be configured in the production environment. Backups must be stored in a location physically separate from the primary server. The recovery point objective (RPO) must not exceed 24 hours, meaning no more than one day of data may be lost in the event of a catastrophic server failure.
+  Recovery time. The system must be restorable from a backup within 4 hours of a declared failure event, constituting a recovery time objective (RTO) of 4 hours.
+
+  Confirmation of destructive actions. All irreversible or high-impact actions
+- including asset status changes to Liquidated, liquidation approvals, and user account deactivation - must require explicit user confirmation through a modal dialog before execution. The confirmation dialog must clearly state the action and its consequences in Vietnamese.
+  Atomic workflow transitions. All multi-table state changes triggered by work- flow completion events - such as updating the asset's managing unit, status, life- cycle history, and audit log upon handover completion - must be executed within a single ACID-compliant database transaction. If any part of the transaction fails, the entire operation must be rolled back and the system must return to its prior state without partial updates.
+  Immutability of financial records. Stock transaction records and asset history records must not be editable or deletable after creation. These records constitute the financial evidence base for audit purposes and their integrity must be preserved unconditionally.
+
+5.3 Security Requirements
+The system stores and processes sensitive state financial data and personal information of government officers. The following security requirements apply:
+  Authentication. All access to the system must require successful authentication via the login endpoint. Unauthenticated requests to any protected endpoint must be rejected with HTTP 401 Unauthorized. Session state is managed exclusively through signed JWT tokens; no server-side session storage is used.
+  Authorisation. Role-based access control must be enforced at the API layer by Spring Security on every protected endpoint. UI-level role filtering alone is not a sufficient security control. An Asset Manager must not be able to access audit log management endpoints even if the UI button is absent.
+  Password storage. All user passwords must be hashed using the BCrypt algo- rithm with a minimum cost factor of 10 before storage. Plaintext passwords must never appear in database records, log files, API responses, or error messages.
+  Data in transit. In production deployment, all HTTP traffic between clients and the server must be encrypted using TLS 1.2 or higher. Plain HTTP must be disabled or redirected to HTTPS. JWT tokens transmitted in the Authorization header are protected by this transport encryption.
+  Data at rest. Sensitive fields - including password hashes, officer personal infor- mation, and financial cost figures - must be stored in the PostgreSQL database with appropriate access controls. Database-level user permissions must be con- figured so that the application's database user has only the minimum privileges required (SELECT, INSERT, UPDATE on operational tables; INSERT only on audit log and history tables).
+  Personal data protection. The collection, storage, and processing of personal information of officers and staff must comply with Ngh? d?nh 13/2023/N -CP.
+
+Personal data fields must only be accessible to roles that explicitly require them. The System Administrator role has access to user account data; operational roles do not.
+  Separation of duties. The system must enforce at the service layer that no user may both initiate and approve the same transaction. This constraint applies to stock issuances, asset handover requests, and liquidation requests. Enforcement must occur in the backend service logic and must not rely solely on UI controls.
+  Audit log integrity. The audit log table must be protected against modification at the database level as specified in RP-01a. Administrator-level application ac- counts must not have the ability to delete or modify audit log entries through any application interface.
+  Secret management. JWT signing secrets, database passwords, and other sen- sitive configuration values must be stored in environment variables or a .env file that is excluded from version control via .gitignore. These values must never be hardcoded in source code or committed to the Git repository.
+
+5.4 Software Quality Attributes
+  Reliability. The system must produce consistent and correct results for all fi- nancial calculations across repeated executions with identical inputs. Depreciation computations, stock balance derivations, and report aggregations must return the same result regardless of the time of day, concurrent user load, or number of previous executions. All financial logic must be covered by unit tests that verify correctness against known expected values.
+  Maintainability. The backend codebase must follow the package-by-feature archi- tecture pattern, with each module (asset, stock, handover, liquidation, audit, report) constituting a self-contained package. Each package must include a con- troller, service, repository, entity, and DTO layer. Public methods and classes must include Javadoc comments. The frontend must maintain a corresponding modular structure with one API file, one types file, and one pages folder per backend module.
+  Testability. Each backend module must include unit tests for its service layer covering at minimum: the happy path (valid input produces correct output), a not-found case (invalid identifier returns the appropriate exception), and an invalid input case (bad request data returns a validation error). Tests must be runnable via ./mvnw test without requiring an active database connection (using mocking).
+  Usability. Core user journeys - registering an asset, recording a stock receipt, initiating a handover, and generating a report - must be completable by a new user with general computer literacy without reference to external documentation. All forms must provide inline validation feedback. Error messages must be specific, actionable, and written in Vietnamese.
+  Portability. The backend must be deployable on any Linux server with Java 17 and Docker installed, without modification to the source code. All environment- specific configuration must be externalised to application.yml and environment
+
+variables. The system must not depend on any Windows-specific or macOS-specific file paths, libraries, or system calls.
+  Interoperability. The backend must expose a fully documented RESTful API conforming to OpenAPI 3.0, served via Springdoc at runtime. This interface enables future integration with external accounting systems (MISA, Fast Accounting) and ministry reporting portals without requiring changes to the core application logic.
+  Auditability. The system must ensure that every state-changing event is traceable to a specific user, timestamp, and IP address through the audit log (RP-01). It must be possible for an auditor to reconstruct the complete history of any asset or stock transaction from the combination of the asset history table, the stock transaction table, and the audit log table.
+
+5.5 Business Rules
+The following operating principles govern the behaviour of the system and imply specific enforcement requirements in the application logic:
+  BR-01 - Unit-scoped data isolation. A user may only view, create, or modify records that belong to the managing unit(s) to which they are assigned. Cross-unit visibility may only be granted explicitly by a System Administrator. This rule applies to assets, stock transactions, handover requests, and reports.
+  BR-02 - Separation of duties. The user who initiates a transaction (stock issuance, handover request, liquidation request) must not be the same user who approves it. The system must reject approval attempts where the approver identifier matches the initiator identifier, regardless of the approver's role.
+  BR-03 - Depreciation basis. Asset depreciation must be calculated from the original cost (nguy n gi  ) minus the salvage value, divided by the useful life in years, in accordance with the straight-line method defined in Th ng tu 45/2013/TT-BTC. The useful life assigned at registration must fall within the minimum and maximum range defined for the asset's category.
+  BR-04 - Stock balance non-negativity. A stock issuance transaction must not be permitted if the resulting stock balance for the material at the specified storage location would become negative. The system must validate the available balance before recording any issuance and reject the transaction with an appropriate error message if insufficient stock exists.
+  BR-05 - Liquidated asset immutability. Once an asset's status is set to Liquidated upon completion of a liquidation workflow, no further modifications to that asset's profile, status, or financial parameters are permitted. The asset record becomes permanently read-only. This rule must be enforced at the service layer and cannot be overridden by any role including System Administrator.
+  BR-06 - Audit log retention. Audit log records must be retained for a mini- mum of 10 years from the date of the recorded event, in accordance with Vietnamese state records and archiving regulations. No automated purging or archiving mech- anism may remove audit log entries within this retention window.
+
+  BR-07 - Document numbering. Handover records and liquidation documents generated by the system must be assigned a unique, sequential document reference number following the conventions: BG-YYYY-NNN for handover records (Bi n b?n b n giao) and TL-YYYY-NNN for liquidation records, where YYYY is the four-digit year and NNN is a zero-padded sequential counter reset annually.
+
+6 Other Requirements
+6.1 Database Requirements
+The system uses PostgreSQL 15 as its sole data store. The following database-level requirements apply in addition to those implied by the functional and nonfunctional requirements above:
+  Schema version control. All database schema definitions, index creations, con- straint additions, and seed data insertions must be managed exclusively through Flyway versioned migration scripts stored in src/main/resources/db/migration/. Manual execution of SQL against the production database outside of Flyway is not permitted.
+  UUID primary keys. All primary keys in operational tables must use the UUID data type generated via PostgreSQL's gen_random_uuid() function. Sequential integer identifiers must not be used for tables containing asset, stock, handover, liquidation, or user records, as UUIDs prevent enumeration attacks and support future data migration scenarios.
+  Timestamps. All tables must record created_at and updated_at timestamps us- ing the PostgreSQL TIMESTAMP type defaulting to NOW(). Append-only tables (stock transactions, asset history, audit log) record only created_at or performed_at and must not include an updated_at column, as including one would imply mutability.
+  Referential integrity. All foreign key relationships between tables must be en- forced at the database level using PostgreSQL foreign key constraints with appro- priate ON DELETE behaviour. Orphaned records must not be permitted.
+  Computed values. The current stock balance per material per storage location must not be stored as a database column. It must be derived at query time from the sum of receipt and issuance transactions. Similarly, accumulated depreciation and net book value may be stored as cached columns on the asset record but must always be recomputed and updated server-side whenever the underlying financial parameters change.
+
+6.2 Internationalisation Requirements
+  The system is localised exclusively for Vietnamese in Version 1.0. All user-facing strings - including UI labels, error messages, validation feedback, notification text, and generated document content - must be in Vietnamese.
+  The system must correctly store, retrieve, and display Vietnamese Unicode char- acters (including characters with diacritical marks such as ?, ?, u?, ?) without
+
+corruption. The database must use UTF-8 encoding. The backend must use UTF- 8 throughout. The frontend must declare UTF-8 encoding in the HTML <meta charset> tag.
+  Date values displayed in the user interface must follow the Vietnamese conven- tion: DD/MM/YYYY. Monetary values must be displayed in Vietnamese  ?ng (VND) formatted with thousand separators (e.g., 25.000.000 d).
+  Multi-language support and internationalisation (i18n) framework integration are out of scope for Version 1.0. The codebase does not need to support runtime language switching.
+
+6.3 Legal and Regulatory Requirements
+  The system must at all times remain compliant with the regulatory framework identified in Section 1.5. If any of the referenced regulations are amended after the initial release, a corresponding system update must be planned and prioritised.
+  The generated handover and liquidation documents constitute legally significant administrative records under Vietnamese state law.  The system must preserve a copy of each generated document or sufficient data to regenerate an identical document on demand.
+  The system must not store or process any data that would classify it as a system handling state secrets (b  m?t nh  nu?c) under Vietnamese law. Asset financial data classified at that level must be managed through separate, approved channels.
+
+A Glossary
+The following terms and abbreviations are used throughout this document:
+
+Term / Abbrevia-
+tion
+Definition
+ACID
+Atomicity, Consistency, Isolation, Durability - the four proper-
+ties that guarantee database transactions are processed reliably.
+Asset Manager
+A user role (R-02) responsible for registering and maintaining
+fixed asset profiles and initiating handover and liquidation work- flows.
+Approving Authority
+A user role (R-04) responsible for approving stock issuances,
+handover requests, and liquidation requests within their man- agement scope.
+Audit log
+An append-only, immutable table recording every state-changing
+event across all system modules, as required by RP-01.
+BCrypt
+A password hashing algorithm used to store user passwords se-
+curely. The system uses BCrypt with a minimum cost factor of 10.
+Bi n b?n b n giao
+Official Vietnamese administrative document recording the for-
+mal transfer of an asset between managing units.
+Term / Abbrevia-
+tion
+Definition
+CORS
+Cross-Origin Resource Sharing - an HTTP mechanism that
+controls which origins are permitted to make requests to the backend API.
+Docker Compose
+A tool for defining and running multi-container Docker appli-
+cations.	Used in this project to standardise the PostgreSQL database environment across all team members.
+Flyway
+A database migration tool integrated into the Spring Boot back-
+end that manages versioned SQL migration scripts and ensures schema consistency.
+FA
+Fixed Assets - the module prefix used for functional require-
+ments FA-01 to FA-04.
+CS
+Consumable Stock - the module prefix used for functional re-
+quirements CS-01 to CS-04.
+HL
+Handover and Liquidation - the module prefix used for func-
+tional requirements HL-01 to HL-03.
+HUST SoICT
+Hanoi University of Science and Technology, School of Informa-
+tion and Communications Technology - the academic institu- tion at which this project is developed.
+JPA
+Java Persistence API - the standard interface for object-
+relational mapping in Java, implemented in this project by Hi- bernate.
+JWT
+JSON Web Token - a compact, signed token used to repre-
+sent the authenticated user's identity and role in stateless API requests.
+Managing unit
+An organisational subdivision of the SOE (e.g., department, sub-
+sidiary unit) to which assets are assigned and users are scoped.
+Nguy n gi 
+Vietnamese accounting term for the historical (original) cost of
+a fixed asset at the time of acquisition, as defined in VAS 03.
+Gi  tr? c n l?i
+Vietnamese accounting term for the net book value of a fixed
+asset, computed as original cost minus accumulated depreciation.
+PostgreSQL
+An open-source relational database management system used as
+the sole data store for this system.
+RBAC
+Role-Based Access Control - a security model in which permis-
+sions are assigned to roles rather than individual users.
+REST
+Representational State Transfer - an architectural style for de-
+signing networked APIs. The backend exposes a RESTful HTTP API consumed by the frontend.
+RPO
+Recovery Point Objective - the maximum acceptable data loss
+in the event of a system failure, defined as 24 hours for this system.
+RP
+Reporting and Audit Trail - the module prefix used for func-
+tional requirements RP-01 to RP-03.
+RTO
+Recovery Time Objective - the maximum acceptable time to
+restore the system after a failure, defined as 4 hours for this system.
+Term / Abbrevia-
+tion
+Definition
+SOE
+State-Owned Enterprise - a government-controlled business en-
+tity subject to Vietnamese state asset management regulations.
+Spring Boot
+An open-source Java framework used to build the backend ap-
+plication server. Version 3 is used in this project, requiring Java 17 or higher.
+Spring Security
+A Spring framework module providing authentication and autho-
+risation capabilities, used in this project to enforce JWT-based authentication and RBAC.
+SRS
+Software Requirements Specification - this document.
+TLS
+Transport Layer Security - a cryptographic protocol used to
+encrypt data in transit between the client browser and the ap- plication server.
+TT45
+Shorthand for Th ng tu 45/2013/TT-BTC - the Ministry of
+Finance circular governing fixed asset classification and depreci- ation in Vietnamese SOEs.
+UUID
+Universally Unique Identifier - a 128-bit identifier used as the
+primary key type for all operational database tables in this sys- tem.
+VAS
+Vietnamese Accounting Standards - the set of accounting stan-
+dards issued by the Vietnamese Ministry of Finance governing financial reporting and asset valuation.
+Vite
+A fast frontend build tool used to scaffold and serve the React
++ TypeScript frontend application.
+Warehouse Officer
+A user role (R-03) responsible for managing the consumable ma-
+terials catalogue and recording stock receipts and issuances.
+
+B Analysis Models
+The following analysis models support the requirements specified in this document. All diagrams are maintained in the docs/diagrams/ folder of the project repository and are referenced here by name.
+  Entity-Relationship Diagram (erd.png). Depicts the complete relational database schema including all tables, columns, primary keys, foreign keys, and cardinal- ity relationships across the six Flyway migration files (V1 through V6). Key re- lationships include: assets references managing_units and asset_categories; asset_history references assets; stock_transactions references materials and managing_units; handover_requests and liquidation_requests both reference assets and managing_units; audit_logs references users.
+  System Architecture Diagram (architecture.png). Depicts the three-tier architecture of the system: the React + TypeScript frontend (browser client), the Spring Boot 3 backend API server (application tier), and the PostgreSQL 15
+database (data tier). Shows the communication protocols between tiers (HTTP/HTTPS REST API between frontend and backend; JDBC/JPA between backend and database) and the Docker Compose containerisation boundary.
+
+  Use Case Diagram (usecase.png). Depicts the five actor types (System Ad- ministrator, Asset Manager, Warehouse Officer, Approving Authority, Finance & Audit Officer) and the use cases available to each, organised by module. Illustrates the separation of duties constraint between the initiating and approving actors in the handover and liquidation workflows.
+  Handover Workflow State Diagram. Depicts the state machine for a han- dover request, showing all valid status transitions: Draft ? Pending Approval ? Approved ? Confirmed ? Completed, with Rejected reachable from any active state.
+  Liquidation Workflow State Diagram. Depicts the state machine for a liqui- dation request: Draft ? Pending Manager ? Pending Director ? Approved ? Completed, with Rejected reachable from any active state.
+
+C To Be Determined List
+The following items remain unresolved at the time of this document's initial release and must be tracked to closure before or during the implementation phase:
+1. TBD-01 - PDF generation library selection. The system requires PDF generation for handover records and asset inventory report exports (HL-03, RP- 02). Two candidate libraries have been identified: iText 7 (AGPL licence) and OpenHTMLtoPDF (Apache 2.0 licence). The final selection must be confirmed by the end of the foundation increment, as it affects the pom.xml dependency and the ExportService implementation. Owner: Nguy?n Ng?c Linh (M4). Target resolution: Week 2.
+2. TBD-02 - JWT token expiry duration. The expiry duration of issued JWT tokens has not been finalised. A duration that is too short increases friction for users performing long data-entry tasks; a duration that is too long increases security exposure. The recommended range is 4-8 hours for working-day sessions. Owner: L  Vi?t Cu?ng (M1). Target resolution: Week 2.
+3. TBD-03 - Asset code format. The format for automatically generated asset codes (e.g., TS-YYYY-NNN) has not been formally confirmed with the project super- visor. If a different format is required by the target organisation, the seed data and validation rules must be updated accordingly. Owner:  inh H  H?i (M2). Target resolution: Week 3.
+4. TBD-04 - Reorder threshold alert delivery mechanism. The NFRs do not specify how reorder threshold alerts (when stock falls below minimum level) are delivered to the Warehouse Officer. Options include: in-app notification banner, dashboard widget, or email notification. Email delivery requires an SMTP server configuration that may not be available in the target environment. Owner: Ho ng Qu?c Huy (M3). Target resolution: Week 4.
+5. TBD-05 - Report export size limit. The maximum number of rows permitted in a single Excel or PDF export has not been defined. Very large exports may cause memory pressure on the application server. A row limit (e.g., 10,000 rows per export) or a streaming export approach must be decided before the reporting module is implemented. Owner: Nguy?n Ng?c Linh (M4). Target resolution: Week 8.
+6. TBD-06 - Production deployment environment. The specific server hard- ware and network configuration of the production deployment environment has not been confirmed. The deployment guide (docs/deployment-guide.md) will be finalised once the target environment specifications are known. Owner: L  Vi?t Cu?ng (M1). Target resolution: Week 12.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

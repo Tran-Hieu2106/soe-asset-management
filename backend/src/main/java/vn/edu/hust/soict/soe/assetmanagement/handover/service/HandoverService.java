@@ -288,17 +288,6 @@ public class HandoverService {
         request.setDeptApprovalNotes(approverNotes);
         HandoverRequest saved = handoverRepository.save(request);
 
-        // ── Cross-module: Update the asset (HL-01) ────────────────────────
-        // Mark the asset as TRANSFERRED and update its owning unit.
-        // This call will also write its own entry to asset_history via FixedAssetService.
-        fixedAssetService.updateAssetStatusAndUnit(
-                saved.getAssetId(),
-                AssetStatus.TRANSFERRED,
-                saved.getToUnitId(),
-                "Bàn giao tài sản theo yêu cầu " + saved.getRequestCode(),
-                approvedBy
-        );
-
         log.info("Handover {} approved by {}", saved.getRequestCode(), approvedBy);
 
         // ── Audit log (RP-03) ─────────────────────────────────────────────
@@ -404,6 +393,15 @@ public class HandoverService {
         request.setCompletedAt(LocalDateTime.now());
         HandoverRequest saved = handoverRepository.save(request);
 
+        // ── HL-01a: Update asset on completion (atomic with document generation) ──
+        fixedAssetService.updateAssetStatusAndUnit(
+                saved.getAssetId(),
+                AssetStatus.TRANSFERRED,
+                saved.getToUnitId(),
+                "Hoàn tất bàn giao tài sản theo yêu cầu " + saved.getRequestCode(),
+                completedBy
+        );
+
         log.info("Handover {} completed by {}. Document ref: {}",
                 saved.getRequestCode(), completedBy, documentRef);
 
@@ -465,19 +463,7 @@ public class HandoverService {
             throw new BusinessRuleException("Lý do từ chối không được để trống.");
         }
 
-        // ── If APPROVED: roll back the asset status to IN_USE ─────────────
-        // The asset was marked TRANSFERRED when approved. Rejection undoes this.
         String oldStatus = request.getStatus().name();
-        if (request.getStatus() == HandoverStatus.APPROVED) {
-            fixedAssetService.updateAssetStatusAndUnit(
-                    request.getAssetId(),
-                    AssetStatus.IN_USE,
-                    request.getFromUnitId(),   // Restore original unit
-                    "Hoàn trả trạng thái tài sản do yêu cầu bàn giao " +
-                    request.getRequestCode() + " bị từ chối",
-                    rejectedBy
-            );
-        }
 
         // ── Transition ────────────────────────────────────────────────────
         request.setStatus(HandoverStatus.REJECTED);
@@ -502,6 +488,16 @@ public class HandoverService {
         );
 
         return HandoverDto.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] downloadDocument(UUID id) {
+        HandoverRequest request = findOrThrow(id);
+        if (request.getStatus() != HandoverStatus.COMPLETED) {
+            throw new BusinessRuleException(
+                    "Chỉ có thể xuất tài liệu khi bàn giao đã hoàn thành.");
+        }
+        return handoverDocumentService.generatePdf(request);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
