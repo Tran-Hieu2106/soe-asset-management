@@ -64,4 +64,14 @@ public class FixedAssetDTO {
     
     private AssetStatus status;
     private String notes;
+
+    // Read-only enriched fields
+    private String categoryCode;
+    private String categoryName;
+    private String managingUnitCode;
+    private String managingUnitName;
+    private BigDecimal annualDepreciationAmount;
+    private BigDecimal annualDepreciationRate;
+    private LocalDate depreciationStartDate;
+    private LocalDate depreciationEndDate;
 }

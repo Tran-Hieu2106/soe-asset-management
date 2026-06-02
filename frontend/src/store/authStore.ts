@@ -68,19 +68,17 @@ export const useAuthStore = create<AuthState>()(
 // ── Role constants (matches backend role codes exactly) ───────
 
 export const ROLES = {
-  SYSTEM_ADMIN:   'ROLE_SYSTEM_ADMIN',
-  ASSET_MANAGER:  'ROLE_ASSET_MANAGER',
-  WAREHOUSE:      'ROLE_WAREHOUSE',
-  APPROVING_AUTH: 'ROLE_APPROVING_AUTH',
-  FINANCE_AUDIT:  'ROLE_FINANCE_AUDIT',
+  SYSTEM_ADMIN:   'SYSTEM_ADMIN',
+  ASSET_MANAGER:  'ASSET_MANAGER',
+  WAREHOUSE:      'WAREHOUSE',
+  APPROVING_AUTH: 'APPROVING_AUTH',
+  FINANCE_AUDIT:  'FINANCE_AUDIT',
 } as const;
 
-// ── Role display names (Vietnamese) ──────────────────────────
-
 export const ROLE_LABELS: Record<string, string> = {
-  ROLE_SYSTEM_ADMIN:   'Quản trị viên',
-  ROLE_ASSET_MANAGER:  'Quản lý tài sản',
-  ROLE_WAREHOUSE:      'Thủ kho',
-  ROLE_APPROVING_AUTH: 'Người phê duyệt',
-  ROLE_FINANCE_AUDIT:  'Kế toán / Kiểm toán',
+  SYSTEM_ADMIN:   'Quản trị viên',
+  ASSET_MANAGER:  'Quản lý tài sản',
+  WAREHOUSE:      'Thủ kho',
+  APPROVING_AUTH: 'Người phê duyệt',
+  FINANCE_AUDIT:  'Kế toán / Kiểm toán',
 };

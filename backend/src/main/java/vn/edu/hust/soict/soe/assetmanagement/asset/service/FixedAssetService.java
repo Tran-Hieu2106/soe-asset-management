@@ -10,6 +10,7 @@ import vn.edu.hust.soict.soe.assetmanagement.asset.dto.FixedAssetDTO;
 import vn.edu.hust.soict.soe.assetmanagement.asset.entity.AssetHistory;
 import vn.edu.hust.soict.soe.assetmanagement.asset.entity.FixedAsset;
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
+import vn.edu.hust.soict.soe.assetmanagement.asset.repository.AssetSpecifications;
 import vn.edu.hust.soict.soe.assetmanagement.asset.repository.AssetHistoryRepository;
 import vn.edu.hust.soict.soe.assetmanagement.asset.repository.FixedAssetRepository;
 import vn.edu.hust.soict.soe.assetmanagement.audit.service.AuditLogService;
@@ -46,6 +47,45 @@ public class FixedAssetService {
     @Transactional(readOnly = true)
     public Page<FixedAsset> getAllAssets(Pageable pageable) {
         return fixedAssetRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<FixedAsset> searchAssets(
+            AssetStatus status,
+            Integer categoryId,
+            UUID managingUnitId,
+            LocalDate acquisitionFrom,
+            LocalDate acquisitionTo,
+            String keyword,
+            Pageable pageable) {
+        return fixedAssetRepository.findAll(
+                AssetSpecifications.filter(status, categoryId, managingUnitId, acquisitionFrom, acquisitionTo, keyword),
+                pageable);
+    }
+
+    public FixedAsset updateAsset(UUID id, FixedAssetDTO dto, String username) {
+        FixedAsset asset = getAssetOrThrow(id);
+        if (asset.getStatus() != AssetStatus.IN_USE && asset.getStatus() != AssetStatus.IDLE) {
+            throw new BusinessRuleException(
+                    "Chỉ có thể cập nhật tài sản ở trạng thái IN_USE hoặc IDLE.");
+        }
+
+        if (dto.getName() != null) asset.setName(dto.getName());
+        if (dto.getCategoryId() != null) asset.setCategoryId(dto.getCategoryId());
+        if (dto.getManagingUnitId() != null) asset.setManagingUnitId(dto.getManagingUnitId());
+        if (dto.getSerialNumber() != null) asset.setSerialNumber(dto.getSerialNumber());
+        if (dto.getManufacturer() != null) asset.setManufacturer(dto.getManufacturer());
+        if (dto.getModel() != null) asset.setModel(dto.getModel());
+        if (dto.getCountryOfOrigin() != null) asset.setCountryOfOrigin(dto.getCountryOfOrigin());
+        if (dto.getTechnicalSpecs() != null) asset.setTechnicalSpecs(dto.getTechnicalSpecs());
+        if (dto.getLocation() != null) asset.setLocation(dto.getLocation());
+        if (dto.getNotes() != null) asset.setNotes(dto.getNotes());
+
+        FixedAsset saved = fixedAssetRepository.save(asset);
+        saveHistoryLog(saved.getId(), "UPDATED", "Cập nhật thông tin tài sản", "{}", "{}", username);
+        auditLogService.log("ASSET", "UPDATE", saved.getId().toString(), saved.getAssetCode(),
+                "{}", "{\"name\": \"" + saved.getName() + "\"}", "Cập nhật tài sản");
+        return saved;
     }
 
     // ── CREATE (FA-01) ────────────────────────────────────────────────────

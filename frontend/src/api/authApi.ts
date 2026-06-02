@@ -25,7 +25,16 @@ export const authApi = {
 
   getMe: () =>
     axiosInstance
-      .get<{ success: boolean; message: string; data: CurrentUser }>
+      .get<{ success: boolean; message: string; data: CurrentUser & { roles?: string[] | Set<string> } }>
         ('/users/me')
-      .then(r => r.data.data),
+      .then(r => {
+        const d = r.data.data;
+        return {
+          ...d,
+          roles: Array.isArray(d.roles) ? d.roles : [...(d.roles ?? [])],
+          managingUnitCodes: Array.isArray(d.managingUnitCodes)
+            ? d.managingUnitCodes
+            : [...(d.managingUnitCodes ?? [])],
+        } as CurrentUser;
+      }),
 };

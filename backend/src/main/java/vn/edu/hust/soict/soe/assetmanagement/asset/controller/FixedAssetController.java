@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,24 +19,16 @@ import vn.edu.hust.soict.soe.assetmanagement.asset.entity.AssetHistory;
 import vn.edu.hust.soict.soe.assetmanagement.asset.entity.FixedAsset;
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
 import vn.edu.hust.soict.soe.assetmanagement.asset.repository.AssetHistoryRepository;
+import vn.edu.hust.soict.soe.assetmanagement.asset.service.AssetMapperService;
 import vn.edu.hust.soict.soe.assetmanagement.asset.service.FixedAssetService;
 import vn.edu.hust.soict.soe.assetmanagement.common.ApiResponse;
 import vn.edu.hust.soict.soe.assetmanagement.common.PageResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * ==============================================================================
- * CONTROLLER: FixedAssetController
- * PURPOSE: Exposes REST API for Assets. 
- * RULE CHECK: 
- * - Wraps all returns in ApiResponse and PageResponse.
- * - Applies @PreAuthorize exactly as dictated in SecurityConfig.java.
- * - Extracts username securely from the Authentication object.
- * ==============================================================================
- */
 @RestController
 @RequestMapping("/api/assets")
 @RequiredArgsConstructor
@@ -45,13 +38,23 @@ public class FixedAssetController {
 
     private final FixedAssetService fixedAssetService;
     private final AssetHistoryRepository assetHistoryRepository;
+    private final AssetMapperService assetMapperService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER', 'FINANCE_AUDIT', 'APPROVING_AUTH')")
-    @Operation(summary = "Lấy danh sách tài sản (phân trang)")
-    public ResponseEntity<ApiResponse<PageResponse<FixedAssetDTO>>> getAllAssets(Pageable pageable) {
-        Page<FixedAsset> page = fixedAssetService.getAllAssets(pageable);
-        Page<FixedAssetDTO> dtoPage = page.map(this::mapToDto);
+    @Operation(summary = "Lấy danh sách tài sản (phân trang, lọc)")
+    public ResponseEntity<ApiResponse<PageResponse<FixedAssetDTO>>> getAllAssets(
+            @RequestParam(required = false) AssetStatus status,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) UUID managingUnitId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate acquisitionFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate acquisitionTo,
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+
+        Page<FixedAsset> page = fixedAssetService.searchAssets(
+                status, categoryId, managingUnitId, acquisitionFrom, acquisitionTo, keyword, pageable);
+        Page<FixedAssetDTO> dtoPage = page.map(assetMapperService::toDto);
         return ResponseEntity.ok(ApiResponse.success("Tải danh sách thành công", PageResponse.of(dtoPage)));
     }
 
@@ -60,32 +63,45 @@ public class FixedAssetController {
     @Operation(summary = "Xem chi tiết tài sản (tính khấu hao realtime)")
     public ResponseEntity<ApiResponse<FixedAssetDTO>> getAssetById(@PathVariable UUID id) {
         FixedAsset asset = fixedAssetService.calculateCurrentDepreciation(id);
-        return ResponseEntity.ok(ApiResponse.success("Tải thông tin chi tiết thành công", mapToDto(asset)));
+        return ResponseEntity.ok(ApiResponse.success(
+                "Tải thông tin chi tiết thành công", assetMapperService.toDto(asset)));
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER')")
     @Operation(summary = "Tạo mới hồ sơ tài sản")
     public ResponseEntity<ApiResponse<FixedAssetDTO>> createAsset(
-            @Valid @RequestBody FixedAssetDTO dto, 
+            @Valid @RequestBody FixedAssetDTO dto,
             Authentication authentication) {
-        
         FixedAsset created = fixedAssetService.createAsset(dto, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Đăng ký tài sản thành công", mapToDto(created)));
+                .body(ApiResponse.success("Đăng ký tài sản thành công", assetMapperService.toDto(created)));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER')")
+    @Operation(summary = "Cập nhật thông tin tài sản")
+    public ResponseEntity<ApiResponse<FixedAssetDTO>> updateAsset(
+            @PathVariable UUID id,
+            @RequestBody FixedAssetDTO dto,
+            Authentication authentication) {
+        FixedAsset updated = fixedAssetService.updateAsset(id, dto, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Cập nhật tài sản thành công", assetMapperService.toDto(updated)));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'ASSET_MANAGER')")
-    @Operation(summary = "Cập nhật trạng thái tài sản thủ công (ví dụ: Bảo trì)")
+    @Operation(summary = "Cập nhật trạng thái tài sản thủ công")
     public ResponseEntity<ApiResponse<FixedAssetDTO>> updateStatus(
-            @PathVariable UUID id, 
-            @RequestParam AssetStatus newStatus, 
+            @PathVariable UUID id,
+            @RequestParam AssetStatus newStatus,
             @RequestParam String reason,
             Authentication authentication) {
-        
-        FixedAsset updated = fixedAssetService.updateAssetStatus(id, newStatus, reason, authentication.getName());
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công", mapToDto(updated)));
+        FixedAsset updated = fixedAssetService.updateAssetStatus(
+                id, newStatus, reason, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Cập nhật trạng thái thành công", assetMapperService.toDto(updated)));
     }
 
     @GetMapping("/{id}/history")
@@ -95,32 +111,6 @@ public class FixedAssetController {
         List<AssetHistoryDTO> history = assetHistoryRepository.findByAssetIdOrderByPerformedAtDesc(id)
                 .stream().map(this::mapToHistoryDto).collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success("Tải lịch sử thành công", history));
-    }
-
-    // ── MAPPERS ───────────────────────────────────────────────────────────
-    private FixedAssetDTO mapToDto(FixedAsset asset) {
-        return FixedAssetDTO.builder()
-                .id(asset.getId())
-                .assetCode(asset.getAssetCode())
-                .name(asset.getName())
-                .categoryId(asset.getCategoryId())
-                .managingUnitId(asset.getManagingUnitId())
-                .serialNumber(asset.getSerialNumber())
-                .manufacturer(asset.getManufacturer())
-                .model(asset.getModel())
-                .countryOfOrigin(asset.getCountryOfOrigin())
-                .technicalSpecs(asset.getTechnicalSpecs())
-                .location(asset.getLocation())
-                .originalCost(asset.getOriginalCost())
-                .acquisitionDate(asset.getAcquisitionDate())
-                .usefulLifeYears(asset.getUsefulLifeYears())
-                .salvageValue(asset.getSalvageValue())
-                .depreciationMethod(asset.getDepreciationMethod())
-                .accumulatedDepreciation(asset.getAccumulatedDepreciation())
-                .netBookValue(asset.getNetBookValue())
-                .status(asset.getStatus())
-                .notes(asset.getNotes())
-                .build();
     }
 
     private AssetHistoryDTO mapToHistoryDto(AssetHistory h) {

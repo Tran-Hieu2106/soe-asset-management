@@ -1,5 +1,12 @@
 package vn.edu.hust.soict.soe.assetmanagement.handover.service;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -129,6 +136,36 @@ public class HandoverDocumentService {
         //   return "/storage/handovers/" + documentRef + ".pdf";
 
         return documentRef;
+    }
+
+    public byte[] generatePdf(HandoverRequest handoverRequest) {
+        String documentRef = handoverRequest.getRequestCode().replace("BG-", "BBGTS-");
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            Document doc = new Document(PageSize.A4, 50, 50, 50, 50);
+            PdfWriter.getInstance(doc, out);
+            doc.open();
+            Font title = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Font body = FontFactory.getFont(FontFactory.HELVETICA, 11);
+            doc.add(new Paragraph("BIÊN BẢN BÀN GIAO TÀI SẢN", title));
+            doc.add(new Paragraph("Số: " + documentRef, body));
+            doc.add(new Paragraph(" "));
+            doc.add(new Paragraph("Mã yêu cầu: " + handoverRequest.getRequestCode(), body));
+            doc.add(new Paragraph("Tài sản ID: " + handoverRequest.getAssetId(), body));
+            doc.add(new Paragraph("Người lập: " + handoverRequest.getInitiatedBy(), body));
+            doc.add(new Paragraph("Người phê duyệt: " + nullSafe(handoverRequest.getDeptApprovedBy()), body));
+            doc.add(new Paragraph("Người xác nhận: " + nullSafe(handoverRequest.getConfirmedBy()), body));
+            doc.add(new Paragraph("Ngày bàn giao: " + handoverRequest.getHandoverDate(), body));
+            doc.add(new Paragraph("Tình trạng: " + nullSafe(handoverRequest.getAssetCondition()), body));
+            doc.add(new Paragraph("Lý do: " + nullSafe(handoverRequest.getReason()), body));
+            doc.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new IllegalStateException("Không thể tạo PDF biên bản bàn giao", e);
+        }
+    }
+
+    private String nullSafe(String value) {
+        return value != null ? value : "";
     }
 
     /**

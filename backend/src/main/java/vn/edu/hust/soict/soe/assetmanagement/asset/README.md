@@ -185,3 +185,4 @@ It is specifically designed to fulfill the functional requirements defined in th
 5.  **Global System Audit (RP-03):** The service invokes `AuditLogService.log()`, passing a JSON snapshot of the asset's status and unit ID *before* the transaction, and a JSON snapshot *after* the transaction.
 6.  **Resolution:** The database transaction commits. The asset now formally reflects its new state and ownership across all enterprise reports, stock balances, and UI dashboards.# Module 2 (M2): Fixed Asset Management
 
+ 

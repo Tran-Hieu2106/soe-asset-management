@@ -8,30 +8,28 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * DTO for RP-01: Full Asset Register Report.
- * Flattens the asset data for tabular reporting.
- */
 @Getter
 @Builder
 public class AssetReportDto {
     private UUID assetId;
     private String assetCode;
     private String assetName;
+    private String categoryName;
+    private String managingUnitName;
     private String status;
-    private String managingUnitId;
     private LocalDate acquisitionDate;
     private BigDecimal originalCost;
     private BigDecimal accumulatedDepreciation;
     private BigDecimal netBookValue;
 
-    public static AssetReportDto from(FixedAsset asset) {
+    public static AssetReportDto from(FixedAsset asset, String categoryName, String unitName) {
         return AssetReportDto.builder()
                 .assetId(asset.getId())
                 .assetCode(asset.getAssetCode())
                 .assetName(asset.getName())
+                .categoryName(categoryName)
+                .managingUnitName(unitName)
                 .status(asset.getStatus().name())
-                .managingUnitId(asset.getManagingUnitId() != null ? asset.getManagingUnitId().toString() : "N/A")
                 .acquisitionDate(asset.getAcquisitionDate())
                 .originalCost(asset.getOriginalCost())
                 .accumulatedDepreciation(asset.getAccumulatedDepreciation())
