@@ -114,4 +114,5 @@ Once the Spring Boot backend is running, access the auto-generated API documenta
 | API Specification | [docs/api-spec.md](docs/api-spec.md) | M1 |
 | Database Schema | [docs/database-schema.md](docs/database-schema.md) | M1 |
 | ERD Diagram | [docs/diagrams/erd.png](docs/diagrams/erd.png) | M1 |
-| Architecture Diagram | [docs/diagrams/architecture.png](docs/diagrams/architecture.png) | Shared |
+| Architecture Diagram | [docs/diagrams/architecture](docs/diagrams/architecture.png) | Shared |
+| Use Case Diagram | [docs/diagrams/soe-general-use-case](docs/diagrams/soe-general-use-case.png) | Shared |
