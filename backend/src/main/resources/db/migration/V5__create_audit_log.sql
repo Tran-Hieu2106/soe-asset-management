@@ -54,31 +54,3 @@ CREATE INDEX idx_audit_record_id    ON audit_logs(record_id);
 CREATE INDEX idx_audit_user         ON audit_logs(user_id);
 CREATE INDEX idx_audit_performed_at ON audit_logs(performed_at DESC);
 CREATE INDEX idx_audit_performed_by ON audit_logs(performed_by);
-
--- ============================================================
--- Note for Linh:
--- ============================================================
--- Define ONE public method that every other module calls:
---
---   public void log(
---       String module,
---       String action,
---       String recordId,
---       String recordCode,
---       String oldValue,    // pass null for CREATE actions
---       String newValue,    // pass null for DELETE actions
---       String description
---   )
---
--- Example call from Hai's AssetService.java:
---   auditLogService.log(
---       "ASSET", "CREATE",
---       asset.getId().toString(),
---       asset.getAssetCode(),
---       null,
---       objectMapper.writeValueAsString(assetDto),
---       "Asset " + asset.getAssetCode() + " registered"
---   );
---
--- The service reads the current user from SecurityContextHolder automatically.
--- ============================================================
