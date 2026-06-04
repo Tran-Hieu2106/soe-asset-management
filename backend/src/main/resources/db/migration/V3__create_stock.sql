@@ -94,23 +94,3 @@ CREATE INDEX idx_stock_tx_location      ON stock_transactions(storage_location_i
 CREATE INDEX idx_stock_tx_type          ON stock_transactions(transaction_type);
 CREATE INDEX idx_stock_tx_dept          ON stock_transactions(requesting_department_id);
 CREATE INDEX idx_stock_tx_date          ON stock_transactions(document_date);
-
--- Note for Huy:
--- CS-03 real-time balance query:
---   SELECT
---     material_id,
---     storage_location_id,
---     SUM(CASE WHEN transaction_type = 'RECEIPT' THEN quantity ELSE -quantity END) AS current_balance
---   FROM stock_transactions
---   GROUP BY material_id, storage_location_id;
---
--- CS-04 departmental usage query:
---   SELECT
---     requesting_department_id,
---     material_id,
---     SUM(quantity) AS total_issued,
---     SUM(total_value) AS total_value
---   FROM stock_transactions
---   WHERE transaction_type = 'ISSUE'
---     AND document_date BETWEEN :start AND :end
---   GROUP BY requesting_department_id, material_id;
