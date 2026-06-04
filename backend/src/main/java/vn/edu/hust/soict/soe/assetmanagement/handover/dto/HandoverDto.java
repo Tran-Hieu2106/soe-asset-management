@@ -2,7 +2,9 @@ package vn.edu.hust.soict.soe.assetmanagement.handover.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import vn.edu.hust.soict.soe.assetmanagement.handover.entity.HandoverRequest;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import vn.edu.hust.soict.soe.assetmanagement.handover.entity.HandoverStatus;
 
 import java.time.LocalDate;
@@ -39,6 +41,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HandoverDto {
 
     // ── IDENTITY ──────────────────────────────────────────────────────────
@@ -147,59 +151,5 @@ public class HandoverDto {
 
     /** Username of whoever created the record (same as initiatedBy in practice). */
     private String createdBy;
-
-    // ── FACTORY METHOD ────────────────────────────────────────────────────
-
-    /**
-     * Converts a HandoverRequest JPA entity into this safe DTO.
-     *
-     * This is the single conversion point — always use this method rather than
-     * building the DTO manually, to ensure all fields stay in sync if the
-     * entity is updated.
-     *
-     * @param entity The HandoverRequest entity loaded from the database.
-     * @return A fully populated HandoverDto ready for the API response.
-     */
-    public static HandoverDto from(HandoverRequest entity) {
-        return HandoverDto.builder()
-                // Identity
-                .id(entity.getId())
-                .requestCode(entity.getRequestCode())
-                .assetId(entity.getAssetId())
-                // Parties
-                .fromUnitId(entity.getFromUnitId())
-                .toUnitId(entity.getToUnitId())
-                .initiatedBy(entity.getInitiatedBy())
-                // Status
-                .status(entity.getStatus())
-                // Justification
-                .reason(entity.getReason())
-                .handoverDate(entity.getHandoverDate())
-                .assetCondition(entity.getAssetCondition())
-                .notes(entity.getNotes())
-                // Step 1
-                .deptApprovedBy(entity.getDeptApprovedBy())
-                .deptApprovedAt(entity.getDeptApprovedAt())
-                .deptApprovalNotes(entity.getDeptApprovalNotes())
-                // Step 2
-                .confirmedBy(entity.getConfirmedBy())
-                .confirmedAt(entity.getConfirmedAt())
-                .confirmationNotes(entity.getConfirmationNotes())
-                // Step 3
-                .completedBy(entity.getCompletedBy())
-                .completedAt(entity.getCompletedAt())
-                // Rejection
-                .rejectedBy(entity.getRejectedBy())
-                .rejectedAt(entity.getRejectedAt())
-                .rejectionReason(entity.getRejectionReason())
-                // Document
-                .documentRef(entity.getDocumentRef())
-                .documentGeneratedAt(entity.getDocumentGeneratedAt())
-                .documentSigned(entity.getDocumentSigned())
-                // Audit (from BaseEntity)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .createdBy(entity.getCreatedBy())
-                .build();
-    }
+   
 }

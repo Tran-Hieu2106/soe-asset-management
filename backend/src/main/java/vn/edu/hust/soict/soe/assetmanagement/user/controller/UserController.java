@@ -8,12 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.hust.soict.soe.assetmanagement.common.ApiResponse;
 import vn.edu.hust.soict.soe.assetmanagement.user.dto.CreateUserRequest;
 import vn.edu.hust.soict.soe.assetmanagement.user.dto.UserDto;
-import vn.edu.hust.soict.soe.assetmanagement.user.entity.User;
 import vn.edu.hust.soict.soe.assetmanagement.user.service.UserService;
 
 import java.util.List;
@@ -35,10 +34,16 @@ public class UserController {
     // GET /api/users/me — any authenticated user
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
-    public ResponseEntity<ApiResponse<UserDto>> getCurrentUser(
-            @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<ApiResponse<UserDto>> getCurrentUser(Authentication authentication) {
+        
+        // Extract username from Authentication object, then fetch UserDto using UserService
+        String username = authentication.getName();
+        
+        // UserService returns a UserDto which is safe to return from API (no password hash)
+        UserDto currentUserDto = userService.getUserByUsername(username); 
+        
         return ResponseEntity.ok(
-                ApiResponse.success(UserDto.from(currentUser)));
+                ApiResponse.success("Tải thông tin người dùng thành công.", currentUserDto));
     }
 
     // GET /api/users — SYSTEM_ADMIN only

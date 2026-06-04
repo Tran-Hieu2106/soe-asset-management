@@ -29,6 +29,7 @@ public class StockReportService {
     private final MaterialRepository materialRepository;
     private final StockTransactionRepository transactionRepository;
     private final AuditLogService auditLogService;
+    private final ReportMapperService reportMapperService;
 
     @Transactional(readOnly = true)
     public List<StockReportDto> generateStockReport(LocalDate startDate, LocalDate endDate) {
@@ -62,17 +63,9 @@ public class StockReportService {
 
             BigDecimal closingBalance = openingBalance.add(receivedPeriod).subtract(issuedPeriod);
 
-            return StockReportDto.builder()
-                    .materialId(material.getId())
-                    .materialCode(material.getMaterialCode())
-                    .materialName(material.getName())
-                    .unitOfMeasure(material.getUnitOfMeasure())
-                    .openingBalance(openingBalance)
-                    .totalReceived(receivedPeriod)
-                    .totalIssued(issuedPeriod)
-                    .closingBalance(closingBalance)
-                    .build();
-
+            return reportMapperService.toStockReportDto(
+                    material, openingBalance, receivedPeriod, issuedPeriod, closingBalance);
+                    
         }).collect(Collectors.toList());
 
         auditLogService.log("REPORT", "GENERATE_STOCK_REPORT", null, null, 

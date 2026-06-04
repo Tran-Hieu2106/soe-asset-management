@@ -22,8 +22,8 @@ import org.springframework.lang.NonNull;
 
 /**
  * User service.
- * Also implements UserDetailsService so Spring Security
- * can load users by username during authentication.
+ * Implements UserDetailsService for Spring Security integration.
+ * Contains business logic for user management (CRUD, role assignment, etc.).
  */
 @Service
 @RequiredArgsConstructor
@@ -32,15 +32,22 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapperService userMapperService;
 
-    // ── UserDetailsService (required by Spring Security) ──────
+    // ── UserDetailsService ──────
 
     @Override
-    public UserDetails loadUserByUsername(String username)
-            throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy người dùng: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
+    }
+
+    // ── Helper Methods ──────
+    @Transactional(readOnly = true)
+    public UserDto getUserByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng: " + username));
+        return userMapperService.toDto(user);
     }
 
     // ── CRUD ──────────────────────────────────────────────────
@@ -49,33 +56,28 @@ public class UserService implements UserDetailsService {
     public List<UserDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(UserDto::from)
+                .map(userMapperService::toDto) 
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public UserDto getUserById(@NonNull UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy người dùng với id: " + id));
-        return UserDto.from(user);
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id: " + id));
+        return userMapperService.toDto(user); 
     }
 
     @Transactional
     public UserDto createUser(CreateUserRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BusinessRuleException(
-                    "Tên đăng nhập đã tồn tại: " + request.getUsername());
+            throw new BusinessRuleException("Tên đăng nhập đã tồn tại: " + request.getUsername());
         }
-        if (request.getEmail() != null
-                && userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessRuleException(
-                    "Email đã được sử dụng: " + request.getEmail());
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessRuleException("Email đã được sử dụng: " + request.getEmail());
         }
 
         Role role = roleRepository.findByCode(request.getRoleCode())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy vai trò: " + request.getRoleCode()));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò: " + request.getRoleCode()));
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -87,14 +89,13 @@ public class UserService implements UserDetailsService {
                 .build();
 
         user.getRoles().add(role);
-        return UserDto.from(userRepository.save(user));
+        return userMapperService.toDto(userRepository.save(user)); 
     }
 
     @Transactional
     public void deactivateUser(@NonNull UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy người dùng với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id: " + id));
         user.setActive(false);
         userRepository.save(user);
     }

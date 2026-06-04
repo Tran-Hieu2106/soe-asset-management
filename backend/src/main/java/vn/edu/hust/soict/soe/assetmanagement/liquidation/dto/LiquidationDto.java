@@ -2,7 +2,9 @@ package vn.edu.hust.soict.soe.assetmanagement.liquidation.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import vn.edu.hust.soict.soe.assetmanagement.liquidation.entity.LiquidationRequest;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import vn.edu.hust.soict.soe.assetmanagement.liquidation.entity.LiquidationStatus;
 
 import java.math.BigDecimal;
@@ -43,6 +45,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LiquidationDto {
 
     // ── IDENTITY ──────────────────────────────────────────────────────────
@@ -161,59 +165,4 @@ public class LiquidationDto {
 
     /** Username of whoever created the record (same as initiatedBy in practice). */
     private String createdBy;
-
-    // ── FACTORY METHOD ────────────────────────────────────────────────────
-
-    /**
-     * Converts a LiquidationRequest JPA entity into this safe DTO.
-     *
-     * This is the single conversion point — always call this method rather than
-     * manually constructing the DTO in service or controller code.
-     * Mirrors the same pattern as HandoverDto.from() and AuditLogDto.from().
-     *
-     * @param entity The LiquidationRequest entity loaded from the database.
-     * @return A fully populated LiquidationDto ready for the API response.
-     */
-    public static LiquidationDto from(LiquidationRequest entity) {
-        return LiquidationDto.builder()
-                // Identity
-                .id(entity.getId())
-                .requestCode(entity.getRequestCode())
-                .assetId(entity.getAssetId())
-                .requestingUnitId(entity.getRequestingUnitId())
-                .initiatedBy(entity.getInitiatedBy())
-                // Status
-                .status(entity.getStatus())
-                // Justification
-                .justification(entity.getJustification())
-                .assetCondition(entity.getAssetCondition())
-                .currentMarketValue(entity.getCurrentMarketValue())
-                .disposalMethod(entity.getDisposalMethod())
-                .disposalNotes(entity.getDisposalNotes())
-                // Step 1
-                .managerApprovedBy(entity.getManagerApprovedBy())
-                .managerApprovedAt(entity.getManagerApprovedAt())
-                .managerNotes(entity.getManagerNotes())
-                // Step 2
-                .directorApprovedBy(entity.getDirectorApprovedBy())
-                .directorApprovedAt(entity.getDirectorApprovedAt())
-                .directorNotes(entity.getDirectorNotes())
-                // Completion
-                .completedBy(entity.getCompletedBy())
-                .completedAt(entity.getCompletedAt())
-                .finalDisposalValue(entity.getFinalDisposalValue())
-                // Rejection
-                .rejectedBy(entity.getRejectedBy())
-                .rejectedAt(entity.getRejectedAt())
-                .rejectionReason(entity.getRejectionReason())
-                // Document
-                .documentRef(entity.getDocumentRef())
-                .documentGeneratedAt(entity.getDocumentGeneratedAt())
-                .documentSigned(entity.getDocumentSigned())
-                // Audit (from BaseEntity)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .createdBy(entity.getCreatedBy())
-                .build();
-    }
 }

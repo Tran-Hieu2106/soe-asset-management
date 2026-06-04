@@ -35,70 +35,59 @@ public class MaterialService {
     private final MaterialCategoryRepository categoryRepository;
     private final AuditLogService            auditLogService;
     private final ObjectMapper               objectMapper;
+    private final StockMapperService         stockMapperService;
 
     // ── CREATE ────────────────────────────────────────────────────────────
     public MaterialDto create(CreateMaterialRequest req, String createdBy) {
         log.info("Creating material: {}", req.getMaterialCode());
 
         if (materialRepository.existsByMaterialCode(req.getMaterialCode())) {
-            // Replaced local exception with global BusinessRuleException
             throw new BusinessRuleException("Mã vật tư '" + req.getMaterialCode() + "' đã tồn tại");
         }
 
         MaterialCategory category = findCategoryOrThrow(req.getCategoryId());
+        Material m = stockMapperService.toEntity(req, category);
 
-        Material m = Material.builder()
-                .materialCode(req.getMaterialCode())
-                .name(req.getName())
-                .category(category)
-                .unitOfMeasure(req.getUnitOfMeasure())
-                .technicalSpecs(req.getTechnicalSpecs())
-                .supplierName(req.getSupplierName())
-                .supplierCode(req.getSupplierCode())
-                .unitPrice(req.getUnitPrice())
-                .minimumStock(req.getMinimumStock())
-                .notes(req.getNotes())
-                .isActive(true)
-                .build();
-                
-        // BaseEntity takes care of createdBy automatically via AuditConfig
+        // Save to DB
         Material saved = materialRepository.save(m);
-        
+        MaterialDto savedDto = stockMapperService.toDto(saved);
         auditLogService.log("STOCK", "CREATE_MATERIAL", saved.getId().toString(), saved.getMaterialCode(), 
-                "{}", toJson(saved), "Registered new material");
+                "{}", toJson(savedDto), "Registered new material");
 
-        return toDto(saved);
+        return savedDto;
     }
 
     // ── READ ──────────────────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public Page<MaterialDto> getAll(Pageable pageable) {
-        return materialRepository.findByIsActiveTrue(pageable).map(this::toDto);
+        return materialRepository.findByIsActiveTrue(pageable).map(stockMapperService::toDto);
     }
 
     @Transactional(readOnly = true)
     public Page<MaterialDto> getByCategory(Integer categoryId, Pageable pageable) {
         return materialRepository
                 .findByCategoryIdAndIsActiveTrue(categoryId, pageable)
-                .map(this::toDto);
+                .map(stockMapperService::toDto);
     }
 
     @Transactional(readOnly = true)
     public List<MaterialDto> search(String keyword) {
         return materialRepository.searchByName(keyword)
-                .stream().map(this::toDto).collect(Collectors.toList());
+                .stream()
+                .map(stockMapperService::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public MaterialDto getById(UUID id) {
-        return toDto(findMaterialOrThrow(id));
+        return stockMapperService.toDto(findMaterialOrThrow(id));
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────
     public MaterialDto update(UUID id, UpdateMaterialRequest req, String updatedBy) {
         log.info("Updating material ID: {}", id);
         Material m = findMaterialOrThrow(id);
-        String oldJson = toJson(m);
+        String oldJson = toJson(stockMapperService.toDto(m));
 
         if (req.getName()          != null) m.setName(req.getName());
         if (req.getUnitOfMeasure() != null) m.setUnitOfMeasure(req.getUnitOfMeasure());
@@ -112,11 +101,12 @@ public class MaterialService {
         if (req.getCategoryId()    != null) m.setCategory(findCategoryOrThrow(req.getCategoryId()));
 
         Material updated = materialRepository.save(m);
+        MaterialDto savedDto = stockMapperService.toDto(updated);
         
         auditLogService.log("STOCK", "UPDATE_MATERIAL", updated.getId().toString(), updated.getMaterialCode(), 
-                oldJson, toJson(updated), "Updated material properties");
+                oldJson, toJson(savedDto), "Updated material properties");
 
-        return toDto(updated);
+        return savedDto;
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────
@@ -137,25 +127,5 @@ public class MaterialService {
             log.error("JSON parse error", e);
             return "{}";
         }
-    }
-
-    public MaterialDto toDto(Material m) {
-        return MaterialDto.builder()
-                .id(m.getId())
-                .materialCode(m.getMaterialCode())
-                .name(m.getName())
-                .categoryId(m.getCategory().getId())
-                .categoryName(m.getCategory().getName())
-                .unitOfMeasure(m.getUnitOfMeasure())
-                .technicalSpecs(m.getTechnicalSpecs())
-                .supplierName(m.getSupplierName())
-                .supplierCode(m.getSupplierCode())
-                .unitPrice(m.getUnitPrice())
-                .minimumStock(m.getMinimumStock())
-                .isActive(m.getIsActive())
-                .notes(m.getNotes())
-                .createdAt(m.getCreatedAt())
-                .createdBy(m.getCreatedBy())
-                .build();
     }
 }

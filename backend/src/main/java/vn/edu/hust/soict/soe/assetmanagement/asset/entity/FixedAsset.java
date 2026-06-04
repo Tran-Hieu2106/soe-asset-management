@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
 import vn.edu.hust.soict.soe.assetmanagement.common.BaseEntity;
+import vn.edu.hust.soict.soe.assetmanagement.asset.enums.DepreciationMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -84,9 +85,10 @@ public class FixedAsset extends BaseEntity {
     @Column(name = "useful_life_years", nullable = false)
     private Integer usefulLifeYears;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "depreciation_method", nullable = false, length = 20)
     @Builder.Default
-    private String depreciationMethod = "STRAIGHT_LINE";
+    private DepreciationMethod depreciationMethod = DepreciationMethod.STRAIGHT_LINE;
 
     @Column(name = "depreciation_start_date")
     private LocalDate depreciationStartDate;

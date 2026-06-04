@@ -28,23 +28,4 @@ public class AuditLogDto {
     private String newValue;
     private String description;
     private LocalDateTime performedAt;
-
-    /**
-     * Factory method to map the JPA Entity into this safe DTO.
-     */
-    public static AuditLogDto from(AuditLog log) {
-        return AuditLogDto.builder()
-                .id(log.getId())
-                .module(log.getModule())
-                .action(log.getAction())
-                .recordId(log.getRecordId())
-                .recordCode(log.getRecordCode())
-                .performedBy(log.getPerformedBy())
-                .ipAddress(log.getIpAddress())
-                .oldValue(log.getOldValue())
-                .newValue(log.getNewValue())
-                .description(log.getDescription())
-                .performedAt(log.getPerformedAt())
-                .build();
-    }
 }

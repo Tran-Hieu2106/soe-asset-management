@@ -2,6 +2,9 @@ package vn.edu.hust.soict.soe.assetmanagement.asset.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,6 +17,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AssetHistoryDTO {
     private UUID id;
     private UUID assetId;

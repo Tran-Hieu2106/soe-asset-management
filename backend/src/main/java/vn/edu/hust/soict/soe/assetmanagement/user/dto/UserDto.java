@@ -2,7 +2,6 @@ package vn.edu.hust.soict.soe.assetmanagement.user.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import vn.edu.hust.soict.soe.assetmanagement.user.entity.User;
 
 import java.util.Set;
 import java.util.UUID;
@@ -23,21 +22,4 @@ public class UserDto {
     private boolean isActive;
     private Set<String> roles;
     private Set<String> managingUnitCodes;
-
-    public static UserDto from(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .isActive(user.isActive())
-                .roles(user.getRoles().stream()
-                        .map(r -> r.getCode())
-                        .collect(Collectors.toSet()))
-                .managingUnitCodes(user.getManagingUnits().stream()
-                        .map(u -> u.getCode())
-                        .collect(Collectors.toSet()))
-                .build();
-    }
 }

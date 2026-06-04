@@ -4,7 +4,11 @@ import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import vn.edu.hust.soict.soe.assetmanagement.asset.enums.AssetStatus;
+import vn.edu.hust.soict.soe.assetmanagement.asset.enums.DepreciationMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,6 +24,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FixedAssetDTO {
     private UUID id;
 
@@ -56,7 +62,7 @@ public class FixedAssetDTO {
     private Integer usefulLifeYears;
 
     private BigDecimal salvageValue;
-    private String depreciationMethod;
+    private DepreciationMethod depreciationMethod;
     
     // Read-only fields populated by FA-02 calculation
     private BigDecimal accumulatedDepreciation;

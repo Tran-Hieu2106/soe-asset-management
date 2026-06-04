@@ -89,6 +89,7 @@ public class LiquidationService {
     private final LiquidationRepository liquidationRepository;
     private final FixedAssetService fixedAssetService;   // Cross-module: set asset to LIQUIDATED
     private final AuditLogService auditLogService;        // Cross-module: write audit log
+    private final LiquidationMapperService liquidationMapperService; // Map between Entity and DTO
 
     /**
      * Terminal statuses — requests in these states do NOT block new submissions
@@ -112,7 +113,7 @@ public class LiquidationService {
     @Transactional(readOnly = true)
     public Page<LiquidationDto> getAllLiquidations(Pageable pageable) {
         return liquidationRepository.findAll(pageable)
-                .map(LiquidationDto::from);
+                .map(liquidationMapperService::toDto); // Map Entity to DTO for API response
     }
 
     /**
@@ -126,7 +127,7 @@ public class LiquidationService {
     @Transactional(readOnly = true)
     public LiquidationDto getLiquidationById(UUID id) {
         LiquidationRequest request = findOrThrow(id);
-        return LiquidationDto.from(request);
+        return liquidationMapperService.toDto(request); // Map Entity to DTO for API response
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -164,19 +165,8 @@ public class LiquidationService {
 
         // ── Build the entity ──────────────────────────────────────────────
         // status always starts as DRAFT; documentSigned defaults to false
-        LiquidationRequest entity = LiquidationRequest.builder()
-                .requestCode(generateRequestCode())
-                .assetId(request.getAssetId())
-                .requestingUnitId(request.getRequestingUnitId())
-                .initiatedBy(initiatedBy)
-                .status(LiquidationStatus.DRAFT)
-                .justification(request.getJustification())
-                .assetCondition(request.getAssetCondition())
-                .currentMarketValue(request.getCurrentMarketValue())
-                .disposalMethod(request.getDisposalMethod())
-                .disposalNotes(request.getDisposalNotes())
-                .documentSigned(false)
-                .build();
+        String requestCode = generateRequestCode();
+        LiquidationRequest entity = liquidationMapperService.toEntity(request, initiatedBy, requestCode);
 
         LiquidationRequest saved = liquidationRepository.save(entity);
         log.info("Liquidation request created: {} by {}", saved.getRequestCode(), initiatedBy);
@@ -195,7 +185,7 @@ public class LiquidationService {
                 " cho tài sản " + saved.getAssetId()
         );
 
-        return LiquidationDto.from(saved);
+        return liquidationMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -242,7 +232,7 @@ public class LiquidationService {
                 " được nộp để xét duyệt cấp quản lý"
         );
 
-        return LiquidationDto.from(saved);
+        return liquidationMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -310,7 +300,7 @@ public class LiquidationService {
                 " được phê duyệt cấp quản lý bởi " + approvedBy
         );
 
-        return LiquidationDto.from(saved);
+        return liquidationMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -368,7 +358,7 @@ public class LiquidationService {
                 " được phê duyệt cấp giám đốc bởi " + approvedBy
         );
 
-        return LiquidationDto.from(saved);
+        return liquidationMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -462,7 +452,7 @@ public class LiquidationService {
                 ". Tài sản " + saved.getAssetId() + " đã bị thanh lý."
         );
 
-        return LiquidationDto.from(saved);
+        return liquidationMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -541,7 +531,7 @@ public class LiquidationService {
                 " bởi " + rejectedBy + ". Lý do: " + rejectionReason
         );
 
-        return LiquidationDto.from(saved);
+        return liquidationMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

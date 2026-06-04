@@ -20,7 +20,6 @@ import vn.edu.hust.soict.soe.assetmanagement.stock.repository.StorageLocationRep
 import vn.edu.hust.soict.soe.assetmanagement.stock.repository.StockTransactionRepository;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,6 +39,7 @@ public class StockTransactionService {
     private final StorageLocationRepository  locationRepository;
     private final AuditLogService            auditLogService;
     private final ObjectMapper               objectMapper;
+    private final StockMapperService         stockMapperService; // Đã thêm Mapper Service
 
     // ── CS-02: RECEIPT ────────────────────────────────────────────────────
     public StockTransactionDto createReceipt(ReceiptRequest req, String createdBy) {
@@ -49,27 +49,17 @@ public class StockTransactionService {
         Material        material = findMaterialOrThrow(req.getMaterialId());
         StorageLocation location = findLocationOrThrow(req.getStorageLocationId());
 
-        StockTransaction tx = StockTransaction.builder()
-                .material(material)
-                .storageLocation(location)
-                .transactionType(TransactionType.RECEIPT)
-                .quantity(req.getQuantity())
-                .unitOfMeasure(material.getUnitOfMeasure())
-                .unitPrice(req.getUnitPrice())
-                .documentRef(req.getDocumentRef())
-                .documentDate(req.getDocumentDate())
-                .notes(req.getNotes())
-                .approvedBy(req.getApprovedBy())
-                .approvedAt(req.getApprovedBy() != null ? LocalDateTime.now() : null)
-                .createdBy(createdBy)
-                .build();
+        // Use Mapper to create entity
+        StockTransaction tx = stockMapperService.toReceiptEntity(req, material, location, createdBy);
 
         StockTransaction savedTx = transactionRepository.save(tx);
+        StockTransactionDto savedDto = stockMapperService.toDto(savedTx);
         
+        // Use DTO for logging
         auditLogService.log("STOCK", "RECEIPT", savedTx.getId().toString(), savedTx.getDocumentRef(), 
-                "{}", toJson(savedTx), "Recorded stock receipt for material: " + material.getMaterialCode());
+                "{}", toJson(savedDto), "Recorded stock receipt for material: " + material.getMaterialCode());
 
-        return toDto(savedTx);
+        return savedDto;
     }
 
     // ── CS-02 + CS-04: ISSUE ──────────────────────────────────────────────
@@ -83,6 +73,9 @@ public class StockTransactionService {
         // Guard: cannot issue more than available stock
         BigDecimal available = transactionRepository
                 .checkAvailableStock(req.getMaterialId(), req.getStorageLocationId());
+        if (available == null) {
+            available = BigDecimal.ZERO;
+        }
 
         BigDecimal finalUnitPrice = req.getUnitPrice() != null 
                             ? req.getUnitPrice() 
@@ -90,35 +83,22 @@ public class StockTransactionService {
 
         if (available.compareTo(req.getQuantity()) < 0) {
             log.warn("Insufficient stock — required: {}, available: {}", req.getQuantity(), available);
-            // Replaced local exception with global BusinessRuleException
             throw new BusinessRuleException(
                     "Tồn kho không đủ cho vật tư '" + material.getMaterialCode()
                     + "'. Cần: " + req.getQuantity() + ", Có: " + available);
         }
 
-        StockTransaction tx = StockTransaction.builder()
-                .material(material)
-                .storageLocation(location)
-                .transactionType(TransactionType.ISSUE)
-                .quantity(req.getQuantity())
-                .unitOfMeasure(material.getUnitOfMeasure())
-                .unitPrice(finalUnitPrice)
-                .requestingDepartmentId(req.getRequestingDepartmentId())
-                .requestedBy(req.getRequestedBy())
-                .documentRef(req.getDocumentRef())
-                .documentDate(req.getDocumentDate())
-                .notes(req.getNotes())
-                .approvedBy(req.getApprovedBy())
-                .approvedAt(req.getApprovedBy() != null ? LocalDateTime.now() : null)
-                .createdBy(createdBy)
-                .build();
+        // Use Mapper to create entity
+        StockTransaction tx = stockMapperService.toIssueEntity(req, material, location, finalUnitPrice, createdBy);
 
         StockTransaction savedTx = transactionRepository.save(tx);
+        StockTransactionDto savedDto = stockMapperService.toDto(savedTx);
         
+        // Use DTO for logging
         auditLogService.log("STOCK", "ISSUE", savedTx.getId().toString(), savedTx.getDocumentRef(), 
-                "{}", toJson(savedTx), "Recorded stock issue to department: " + req.getRequestingDepartmentId());
+                "{}", toJson(savedDto), "Recorded stock issue to department: " + req.getRequestingDepartmentId());
 
-        return toDto(savedTx);
+        return savedDto;
     }
 
     // ── READ ──────────────────────────────────────────────────────────────
@@ -126,7 +106,7 @@ public class StockTransactionService {
     public List<StockTransactionDto> getByMaterial(UUID materialId) {
         return transactionRepository
                 .findByMaterialIdOrderByDocumentDateDesc(materialId)
-                .stream().map(this::toDto).collect(Collectors.toList());
+                .stream().map(stockMapperService::toDto).collect(Collectors.toList());
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────
@@ -147,30 +127,5 @@ public class StockTransactionService {
             log.error("JSON parse error", e);
             return "{}";
         }
-    }
-
-    public StockTransactionDto toDto(StockTransaction t) {
-        return StockTransactionDto.builder()
-                .id(t.getId())
-                .materialId(t.getMaterial().getId())
-                .materialCode(t.getMaterial().getMaterialCode())
-                .materialName(t.getMaterial().getName())
-                .storageLocationId(t.getStorageLocation().getId())
-                .storageLocationName(t.getStorageLocation().getName())
-                .transactionType(t.getTransactionType())
-                .quantity(t.getQuantity())
-                .unitOfMeasure(t.getUnitOfMeasure())
-                .unitPrice(t.getUnitPrice())
-                .totalValue(t.getTotalValue())
-                .requestingDepartmentId(t.getRequestingDepartmentId())
-                .requestedBy(t.getRequestedBy())
-                .documentRef(t.getDocumentRef())
-                .documentDate(t.getDocumentDate())
-                .notes(t.getNotes())
-                .approvedBy(t.getApprovedBy())
-                .approvedAt(t.getApprovedAt())
-                .createdAt(t.getCreatedAt())
-                .createdBy(t.getCreatedBy())
-                .build();
     }
 }

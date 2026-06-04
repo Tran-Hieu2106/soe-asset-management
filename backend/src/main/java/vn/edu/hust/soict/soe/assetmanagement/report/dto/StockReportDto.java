@@ -2,6 +2,8 @@ package vn.edu.hust.soict.soe.assetmanagement.report.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -12,6 +14,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class StockReportDto {
     private UUID materialId;
     private String materialCode;

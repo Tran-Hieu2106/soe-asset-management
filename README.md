@@ -42,7 +42,7 @@ soe-asset-management/
 ### Database
 ```bash
 docker-compose up --build # Build Docker
-docker-compose up -d # Database via Docker
+docker-compose up -d # Launch database via Docker
 ```
 
 The database will be available at `http://localhost:5432`.

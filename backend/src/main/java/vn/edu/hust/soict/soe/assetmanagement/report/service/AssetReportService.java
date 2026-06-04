@@ -29,6 +29,7 @@ public class AssetReportService {
     private final FixedAssetService fixedAssetService;
     private final LookupService lookupService;
     private final AuditLogService auditLogService;
+    private final ReportMapperService reportMapperService;
 
     @Transactional(readOnly = true)
     public Page<AssetReportDto> generateAssetReport(
@@ -62,8 +63,8 @@ public class AssetReportService {
                         AssetSpecifications.filter(status, categoryId, managingUnitId, acquisitionFrom, acquisitionTo, null))
                 .stream()
                 .map(asset -> {
-                    FixedAsset computed = fixedAssetService.calculateCurrentDepreciation(asset.getId());
-                    return toReportDto(computed);
+                    //FixedAsset computed = fixedAssetService.calculateCurrentDepreciation(asset.getId());
+                    return toReportDto(asset);
                 })
                 .collect(Collectors.toList());
     }
@@ -73,6 +74,6 @@ public class AssetReportService {
                 .map(c -> c.getName()).orElse("N/A");
         String unitName = lookupService.findUnit(asset.getManagingUnitId())
                 .map(u -> u.getName()).orElse("N/A");
-        return AssetReportDto.from(asset, categoryName, unitName);
+        return reportMapperService.toAssetReportDto(asset, categoryName, unitName);
     }
 }

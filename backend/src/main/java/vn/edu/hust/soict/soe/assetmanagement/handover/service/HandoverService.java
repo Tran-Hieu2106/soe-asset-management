@@ -18,7 +18,6 @@ import vn.edu.hust.soict.soe.assetmanagement.handover.entity.HandoverStatus;
 import vn.edu.hust.soict.soe.assetmanagement.handover.repository.HandoverRepository;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,6 +82,7 @@ public class HandoverService {
     private final FixedAssetService fixedAssetService;      // Cross-module: update asset status/unit
     private final AuditLogService auditLogService;           // Cross-module: write audit log
     private final HandoverDocumentService handoverDocumentService; // HL-03: generate document
+    private final HandoverMapperService handoverMapperService; // Mapper for entity ↔ DTO conversion
 
     /**
      * Terminal statuses — used in the blocking-request query.
@@ -107,7 +107,7 @@ public class HandoverService {
     @Transactional(readOnly = true)
     public Page<HandoverDto> getAllHandovers(Pageable pageable) {
         return handoverRepository.findAll(pageable)
-                .map(HandoverDto::from);
+                .map(handoverMapperService::toDto); // Convert entity to DTO for API response
     }
 
     /**
@@ -121,7 +121,7 @@ public class HandoverService {
     @Transactional(readOnly = true)
     public HandoverDto getHandoverById(UUID id) {
         HandoverRequest request = findOrThrow(id);
-        return HandoverDto.from(request);
+        return handoverMapperService.toDto(request);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -164,19 +164,8 @@ public class HandoverService {
         }
 
         // ── Build and persist the entity ──────────────────────────────────
-        HandoverRequest entity = HandoverRequest.builder()
-                .requestCode(generateRequestCode())
-                .assetId(request.getAssetId())
-                .fromUnitId(request.getFromUnitId())
-                .toUnitId(request.getToUnitId())
-                .initiatedBy(initiatedBy)
-                .status(HandoverStatus.DRAFT)          // Always starts as DRAFT
-                .reason(request.getReason())
-                .handoverDate(request.getHandoverDate())
-                .assetCondition(request.getAssetCondition())
-                .notes(request.getNotes())
-                .documentSigned(false)
-                .build();
+        String requestCode = generateRequestCode();
+        HandoverRequest entity = handoverMapperService.toEntity(request, initiatedBy, requestCode);
 
         HandoverRequest saved = handoverRepository.save(entity);
         log.info("Handover request created: {} by {}", saved.getRequestCode(), initiatedBy);
@@ -193,7 +182,7 @@ public class HandoverService {
                 " cho tài sản " + saved.getAssetId()
         );
 
-        return HandoverDto.from(saved);
+        return handoverMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -238,7 +227,7 @@ public class HandoverService {
                 "Yêu cầu bàn giao " + saved.getRequestCode() + " được nộp để phê duyệt"
         );
 
-        return HandoverDto.from(saved);
+        return handoverMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -301,7 +290,7 @@ public class HandoverService {
                 "Yêu cầu bàn giao " + saved.getRequestCode() + " được phê duyệt bởi " + approvedBy
         );
 
-        return HandoverDto.from(saved);
+        return handoverMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -351,7 +340,7 @@ public class HandoverService {
                 "Đơn vị tiếp nhận xác nhận bàn giao " + saved.getRequestCode()
         );
 
-        return HandoverDto.from(saved);
+        return handoverMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -417,7 +406,7 @@ public class HandoverService {
                 ". Biên bản: " + documentRef
         );
 
-        return HandoverDto.from(saved);
+        return handoverMapperService.toDto(saved);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -487,7 +476,7 @@ public class HandoverService {
                 " bởi " + rejectedBy + ". Lý do: " + rejectionReason
         );
 
-        return HandoverDto.from(saved);
+        return handoverMapperService.toDto(saved);
     }
 
     @Transactional(readOnly = true)

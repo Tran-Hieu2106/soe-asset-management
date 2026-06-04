@@ -16,7 +16,11 @@ import vn.edu.hust.soict.soe.assetmanagement.asset.repository.FixedAssetReposito
 import vn.edu.hust.soict.soe.assetmanagement.audit.service.AuditLogService;
 import vn.edu.hust.soict.soe.assetmanagement.exception.BusinessRuleException;
 import vn.edu.hust.soict.soe.assetmanagement.exception.ResourceNotFoundException;
+import vn.edu.hust.soict.soe.assetmanagement.asset.dto.AssetHistoryDTO;
+import vn.edu.hust.soict.soe.assetmanagement.asset.enums.DepreciationMethod;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -42,15 +46,16 @@ public class FixedAssetService {
     private final FixedAssetRepository fixedAssetRepository;
     private final AssetHistoryRepository assetHistoryRepository;
     private final AuditLogService auditLogService; // M4 Global Audit Integration
+    private final AssetMapperService assetMapperService;
 
     // ── READ (FA-01) ──────────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    public Page<FixedAsset> getAllAssets(Pageable pageable) {
-        return fixedAssetRepository.findAll(pageable);
+    public Page<FixedAssetDTO> getAllAssets(Pageable pageable) {
+        return fixedAssetRepository.findAll(pageable).map(assetMapperService::toDto);
     }
 
     @Transactional(readOnly = true)
-    public Page<FixedAsset> searchAssets(
+    public Page<FixedAssetDTO> searchAssets(
             AssetStatus status,
             Integer categoryId,
             UUID managingUnitId,
@@ -60,10 +65,19 @@ public class FixedAssetService {
             Pageable pageable) {
         return fixedAssetRepository.findAll(
                 AssetSpecifications.filter(status, categoryId, managingUnitId, acquisitionFrom, acquisitionTo, keyword),
-                pageable);
+                pageable).map(assetMapperService::toDto);
     }
 
-    public FixedAsset updateAsset(UUID id, FixedAssetDTO dto, String username) {
+    @Transactional(readOnly = true)
+    public List<AssetHistoryDTO> getAssetHistory(UUID assetId) {
+        getAssetOrThrow(assetId);
+        return assetHistoryRepository.findByAssetIdOrderByPerformedAtDesc(assetId)
+                .stream()
+                .map(assetMapperService::toHistoryDto)
+                .collect(Collectors.toList());
+    }
+
+    public FixedAssetDTO updateAsset(UUID id, FixedAssetDTO dto, String username) {
         FixedAsset asset = getAssetOrThrow(id);
         if (asset.getStatus() != AssetStatus.IN_USE && asset.getStatus() != AssetStatus.IDLE) {
             throw new BusinessRuleException(
@@ -85,36 +99,17 @@ public class FixedAssetService {
         saveHistoryLog(saved.getId(), "UPDATED", "Cập nhật thông tin tài sản", "{}", "{}", username);
         auditLogService.log("ASSET", "UPDATE", saved.getId().toString(), saved.getAssetCode(),
                 "{}", "{\"name\": \"" + saved.getName() + "\"}", "Cập nhật tài sản");
-        return saved;
+        return assetMapperService.toDto(saved);
     }
-
+    
     // ── CREATE (FA-01) ────────────────────────────────────────────────────
-    public FixedAsset createAsset(FixedAssetDTO dto, String username) {
+    public FixedAssetDTO createAsset(FixedAssetDTO dto, String username) {
         if (fixedAssetRepository.existsByAssetCode(dto.getAssetCode())) {
             throw new BusinessRuleException("Mã tài sản đã tồn tại trong hệ thống.");
         }
 
-        FixedAsset asset = FixedAsset.builder()
-                .assetCode(dto.getAssetCode())
-                .name(dto.getName())
-                .categoryId(dto.getCategoryId())
-                .managingUnitId(dto.getManagingUnitId())
-                .serialNumber(dto.getSerialNumber())
-                .manufacturer(dto.getManufacturer())
-                .model(dto.getModel())
-                .countryOfOrigin(dto.getCountryOfOrigin())
-                .technicalSpecs(dto.getTechnicalSpecs())
-                .location(dto.getLocation())
-                .originalCost(dto.getOriginalCost())
-                .acquisitionDate(dto.getAcquisitionDate())
-                .usefulLifeYears(dto.getUsefulLifeYears())
-                .salvageValue(dto.getSalvageValue() != null ? dto.getSalvageValue() : BigDecimal.ZERO)
-                .accumulatedDepreciation(BigDecimal.ZERO)
-                .netBookValue(dto.getOriginalCost())
-                .status(AssetStatus.IN_USE)
-                .depreciationMethod(dto.getDepreciationMethod() != null ? dto.getDepreciationMethod() : "STRAIGHT_LINE")
-                .notes(dto.getNotes())
-                .build();
+        FixedAsset asset = assetMapperService.toEntity(dto);
+        asset.setStatus(AssetStatus.IN_USE); 
 
         FixedAsset savedAsset = fixedAssetRepository.save(asset);
 
@@ -125,21 +120,22 @@ public class FixedAssetService {
         auditLogService.log("ASSET", "CREATE", savedAsset.getId().toString(), savedAsset.getAssetCode(), 
                 "{}", "{\"name\": \"" + savedAsset.getName() + "\"}", "Đăng ký tài sản mới");
 
-        return savedAsset;
+        return assetMapperService.toDto(savedAsset);
     }
 
     // ── DEPRECIATION ENGINE (FA-02) ───────────────────────────────────────
     /**
      * Calculates depreciation on-the-fly based on Circular 45/2013/TT-BTC.
      */
-    public FixedAsset calculateCurrentDepreciation(UUID id) {
+    public FixedAssetDTO calculateCurrentDepreciation(UUID id) {
         FixedAsset asset = getAssetOrThrow(id);
 
-        if ("DECLINING_BALANCE".equalsIgnoreCase(asset.getDepreciationMethod())) {
-            return calculateDecliningBalance(asset);
+        if (DepreciationMethod.DECLINING_BALANCE.equals(asset.getDepreciationMethod())) {
+            calculateDecliningBalance(asset);
         } else {
-            return calculateStraightLine(asset);
+            calculateStraightLine(asset);
         }
+        return assetMapperService.toDto(asset);
     }
 
     private FixedAsset calculateStraightLine(FixedAsset asset) {
@@ -174,18 +170,18 @@ public class FixedAssetService {
     /**
      * Standard status update (e.g., set to MAINTENANCE, or LIQUIDATED by M4).
      */
-    public FixedAsset updateAssetStatus(UUID id, AssetStatus newStatus, String reason, String username) {
+    public FixedAssetDTO updateAssetStatus(UUID id, AssetStatus newStatus, String reason, String username) {
         return updateAssetInternal(id, newStatus, null, reason, username);
     }
 
     /**
      * Advanced status update (e.g., set to TRANSFERRED and update managingUnitId by M4 Handover).
      */
-    public FixedAsset updateAssetStatusAndUnit(UUID id, AssetStatus newStatus, UUID newUnitId, String reason, String username) {
+    public FixedAssetDTO updateAssetStatusAndUnit(UUID id, AssetStatus newStatus, UUID newUnitId, String reason, String username) {
         return updateAssetInternal(id, newStatus, newUnitId, reason, username);
     }
 
-    private FixedAsset updateAssetInternal(UUID id, AssetStatus newStatus, UUID newUnitId, String reason, String username) {
+    private FixedAssetDTO updateAssetInternal(UUID id, AssetStatus newStatus, UUID newUnitId, String reason, String username) {
         FixedAsset asset = getAssetOrThrow(id);
         
         String oldStatus = asset.getStatus().toString();
@@ -207,7 +203,7 @@ public class FixedAssetService {
                 "{\"status\": \"" + newStatus + "\", \"unit\": \"" + newUnitId + "\"}", 
                 reason);
 
-        return updatedAsset;
+        return assetMapperService.toDto(updatedAsset);
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────────

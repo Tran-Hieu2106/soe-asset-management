@@ -32,6 +32,7 @@ import java.util.UUID;
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
+    private final AuditMapperService auditLogMapper; 
 
     /**
      * Retrieves filtered, paginated logs for the RP-03 dashboard.
@@ -43,7 +44,7 @@ public class AuditLogService {
             LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         
         return auditLogRepository.searchLogs(module, action, performedBy, startDate, endDate, pageable)
-                .map(AuditLogDto::from);
+                .map(auditLogMapper::toDto); 
     }
     
     /**
@@ -64,8 +65,6 @@ public class AuditLogService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             username = auth.getName();
-            // Note: If you have a custom UserDetails object, you would cast it here to get the UUID.
-            // For now, tracking username perfectly satisfies the audit requirement.
         }
 
         // Step 2: Extract real Client IP address securely
