@@ -1,5 +1,10 @@
 import { Tag } from 'antd';
 
+/*
+Maps status string codes (for both assets and workflow requests) to human-readable Vietnamese labels and Ant Design tag colors. 
+IN_USE → green/Đang sử dụng, REJECTED → red/Từ chối, etc. 
+Having this in one place ensures consistency everywhere.
+*/
 const LABELS: Record<string, string> = {
   IN_USE: 'Đang sử dụng',
   MAINTENANCE: 'Bảo trì',

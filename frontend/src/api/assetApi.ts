@@ -2,6 +2,12 @@ import axiosInstance from './axiosInstance';
 import type { ApiResponse, PageResponse } from '../types/common.types';
 import type { AssetHistory, AssetStatus, FixedAsset } from '../types/asset.types';
 
+/*
+Six methods covering the full asset lifecycle: list(params) 
+with filtering by status/category/keyword/date range (paginated), getById(id), create(data),
+update(id, data), updateStatus(id, newStatus, reason) (PATCH with query params), 
+and history(id) for the event log.
+*/
 export interface AssetQuery {
   page?: number;
   size?: number;

@@ -4,6 +4,13 @@ import { reportApi, type AuditLog } from '../../api/reportApi';
 import PageHeader from '../../components/PageHeader';
 import { formatDateTime } from '../../utils/formatDate';
 
+/*
+Paginated, filterable log of system events. 
+Filters by module and performedBy. 
+Read-only — no actions. 
+Only visible to SYSTEM_ADMIN and FINANCE_AUDIT roles 
+(enforced in AppLayout's menu filter and implicitly by the backend).
+*/
 export default function AuditLogPage() {
   const [data, setData] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);

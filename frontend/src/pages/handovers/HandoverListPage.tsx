@@ -7,6 +7,11 @@ import StatusBadge from '../../components/StatusBadge';
 import { formatDateTime } from '../../utils/formatDate';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+Shows a table of all handover requests. 
+Admins/managers get a "Create" button. 
+Each row links to the detail page.
+*/
 export default function HandoverListPage() {
   const canCreate = useHasAnyRole([ROLES.SYSTEM_ADMIN, ROLES.ASSET_MANAGER]);
   const [data, setData] = useState<Handover[]>([]);

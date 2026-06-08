@@ -5,6 +5,13 @@ import { stockApi, type StockBalance } from '../../api/stockApi';
 import PageHeader from '../../components/PageHeader';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+Shows current inventory per material per storage location, 
+with a red warning tag when stock falls below minimum. 
+Shows "Nhập kho" / "Xuất kho" links for warehouse staff. 
+StockReceiptPage / StockIssuePage — forms for recording inbound and outbound stock transactions respectively. 
+Both require document reference numbers and dates, mirroring Vietnamese accounting requirements.
+*/
 export default function StockBalancePage() {
   const canTransact = useHasAnyRole([ROLES.SYSTEM_ADMIN, ROLES.WAREHOUSE]);
   const [data, setData] = useState<StockBalance[]>([]);

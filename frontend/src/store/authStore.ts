@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/*
+The central auth state, built with Zustand's create + persist middleware. 
+It stores token (JWT string) and user (a CurrentUser object with id, username, fullName, roles[], managingUnitCodes[]). 
+The persist middleware serialises token and user to localStorage under the key soe-auth so the user stays logged in after a page refresh. 
+Three helper functions — isAuthenticated(), hasRole(role), hasAnyRole(roles[]) — let components check permissions without repeating logic. 
+It also exports ROLES (an object mapping role keys to their backend codes) and ROLE_LABELS (the Vietnamese display names for those roles).
+*/
 // ── Types ─────────────────────────────────────────────────────
 
 export interface CurrentUser {

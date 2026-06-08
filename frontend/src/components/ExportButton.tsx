@@ -1,6 +1,13 @@
 import { Button } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 
+/*
+A reusable Ant Design <Button> with a download icon, 
+loading state, and an onExport callback. 
+Also exports the standalone downloadBlob(blob, filename) utility which creates a temporary <a> element, 
+triggers a click to start the browser's file download, 
+then cleans up the object URL
+*/
 interface ExportButtonProps {
   label?: string;
   loading?: boolean;

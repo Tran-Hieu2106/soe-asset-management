@@ -4,6 +4,11 @@ import { reportApi } from '../../api/reportApi';
 import PageHeader from '../../components/PageHeader';
 import ExportButton, { downloadBlob } from '../../components/ExportButton';
 
+/*
+Date-range filtered stock movement report. 
+The column definitions are generated dynamically from the response keys (Object.keys(data[0])), 
+since the backend schema is flexible.
+*/
 export default function StockReportPage() {
   const [data, setData] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);

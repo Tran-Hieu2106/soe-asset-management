@@ -7,6 +7,13 @@ import type { LookupItem } from '../../types/common.types';
 import type { Material } from '../../api/stockApi';
 import PageHeader from '../../components/PageHeader';
 
+/*
+Records materials coming into the warehouse. 
+A staff member fills in which material arrived, 
+which storage location it went into, how much, the unit price, 
+and a document reference number with date (required for Vietnamese accounting compliance). 
+On submit it calls stockApi.receipt() and redirects to the stock balance page so the user immediately sees the updated inventory.
+*/
 export default function StockReceiptPage() {
   const navigate = useNavigate();
   const [materials, setMaterials] = useState<Material[]>([]);

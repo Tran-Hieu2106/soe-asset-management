@@ -7,6 +7,11 @@ import StatusBadge from '../../components/StatusBadge';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+Workflow control panel with two sequential approve buttons (manager → director). 
+On final approval, opens a number input to record the actual disposal value before closing the request.
+
+*/
 export default function LiquidationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<Liquidation | null>(null);

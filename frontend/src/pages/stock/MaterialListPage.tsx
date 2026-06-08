@@ -4,6 +4,9 @@ import { stockApi, type Material } from '../../api/stockApi';
 import PageHeader from '../../components/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
 
+/*
+Read-only paginated table of warehouse materials.
+*/
 export default function MaterialListPage() {
   const [data, setData] = useState<Material[]>([]);
   const [loading, setLoading] = useState(false);

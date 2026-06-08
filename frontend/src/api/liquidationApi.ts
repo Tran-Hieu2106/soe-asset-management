@@ -1,6 +1,13 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse, PageResponse } from '../types/common.types';
 
+/*
+Defines Liquidation and LiquidationStatus. 
+Follows the same pattern — list, getById, create, then submit, 
+approveManager, approveDirector, complete (with optional finalDisposalValue), and reject. 
+This two-step approval (manager then director) reflects a real bureaucratic approval chain.
+*/
+
 export type LiquidationStatus =
   | 'DRAFT' | 'PENDING_MANAGER' | 'PENDING_DIRECTOR' | 'APPROVED' | 'COMPLETED' | 'REJECTED';
 

@@ -1,6 +1,13 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse, PageResponse } from '../types/common.types';
 
+/*
+Defines Material, StockBalance, ReceiptPayload, IssuePayload. 
+Methods: materials(params) (paginated list), searchMaterials(keyword) (for autocomplete), 
+createMaterial, receipt (warehouse inbound), issue (warehouse outbound), 
+balance (current stock levels per location), and usage (activity report with date range).
+*/
+
 export interface Material {
   id: string;
   materialCode: string;

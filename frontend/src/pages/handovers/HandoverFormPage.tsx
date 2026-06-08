@@ -8,6 +8,12 @@ import type { LookupItem } from '../../types/common.types';
 import type { FixedAsset } from '../../types/asset.types';
 import PageHeader from '../../components/PageHeader';
 
+/*
+A create-only form. 
+User picks an asset, a from-unit, a to-unit, 
+adds a reason and condition, then saves as DRAFT. 
+Redirects to the detail page after creation.
+*/
 export default function HandoverFormPage() {
   const navigate = useNavigate();
   const [units, setUnits] = useState<LookupItem[]>([]);

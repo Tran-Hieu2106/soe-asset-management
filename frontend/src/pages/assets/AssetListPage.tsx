@@ -12,6 +12,12 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+Fetches a paginated asset list with filter controls (keyword search, status dropdown, category dropdown). 
+Renders a table with formatted currency and date columns. 
+The "Add asset" button is only shown if the user has SYSTEM_ADMIN or ASSET_MANAGER roles (checked via useHasAnyRole).
+
+*/
 export default function AssetListPage() {
   const navigate = useNavigate();
   const canEdit = useHasAnyRole([ROLES.SYSTEM_ADMIN, ROLES.ASSET_MANAGER]);

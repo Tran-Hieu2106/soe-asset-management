@@ -1,6 +1,13 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse, PageResponse } from '../types/common.types';
 
+/*
+Defines the AuditLog interface. 
+Methods: assetReport (paginated table), stockReport, exportAssets(format, params) 
+(returns Blob — the responseType: 'blob' tells Axios to keep it as binary), 
+exportStock, and auditLogs (paginated, filterable by module and performer).
+*/
+
 export interface AssetReportRow {
   assetId: string;
   assetCode: string;

@@ -5,6 +5,12 @@ import type { CurrentUser } from '../../store/authStore';
 import { ROLES, ROLE_LABELS } from '../../store/authStore';
 import PageHeader from '../../components/PageHeader';
 
+/*
+Lists all users with their roles (displayed as Vietnamese tags) and active status. 
+The "Add user" modal collects username, password, full name, email, phone, and role. 
+The "Deactivate" button triggers a confirmation dialog before calling userApi.deactivate. 
+Only visible to SYSTEM_ADMIN.
+*/
 export default function UserListPage() {
   const [data, setData] = useState<CurrentUser[]>([]);
   const [loading, setLoading] = useState(false);

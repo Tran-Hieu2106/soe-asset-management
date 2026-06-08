@@ -9,6 +9,11 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+Extracts :id from the URL via useParams, 
+fetches the asset and its history in parallel with Promise.all 
+Shows a <Descriptions> panel for all financial and metadata fields, and a second table for the lifecycle history.
+*/
 export default function AssetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

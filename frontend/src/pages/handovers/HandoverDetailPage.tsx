@@ -7,6 +7,13 @@ import StatusBadge from '../../components/StatusBadge';
 import ExportButton, { downloadBlob } from '../../components/ExportButton';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+The workflow control panel. 
+Shows request info and renders action buttons (Submit, Approve, Confirm, Complete, Reject) 
+based on the current status and the logged-in user's role. 
+On COMPLETED, unlocks a PDF download button.
+*/
+
 export default function HandoverDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<Handover | null>(null);

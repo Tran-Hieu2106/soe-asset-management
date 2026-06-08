@@ -1,6 +1,11 @@
 import axiosInstance from './axiosInstance';
 import type { CurrentUser } from '../store/authStore';
 
+/*
+Two methods: login(data) posts to /auth/login and returns the token + username. 
+getMe() gets /users/me and normalises the roles and managingUnitCodes fields 
+from whatever the backend sends (Set or Array) into plain arrays.
+*/
 // ── Types ─────────────────────────────────────────────────────
 
 export interface LoginRequest {

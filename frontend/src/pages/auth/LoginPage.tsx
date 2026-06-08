@@ -6,6 +6,17 @@ import { authApi } from '../../api/authApi';
 import { useAuthStore } from '../../store/authStore';
 import './LoginPage.css';
 
+/*
+Uses Ant Design <Form> with two fields (username, password). 
+On submit: 
+(1) calls authApi.login(), 
+(2) temporarily stores the token in Zustand so the Axios interceptor can attach it, 
+(3) calls authApi.getMe() to fetch the full user profile including roles, 
+(4) calls setAuth(token, user) to persist both, 
+(5) redirects to /dashboard. Error messages distinguish "bad credentials" from generic server errors. 
+The page has its own LoginPage.css with a centered card, emblem, and branding.
+*/
+
 // ── Types ─────────────────────────────────────────────────────
 
 interface LoginFormValues {

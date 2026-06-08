@@ -1,6 +1,12 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse, PageResponse } from '../types/common.types';
 
+/*
+Defines the Handover type and HandoverStatus union. 
+Nine methods map directly to the multi-step workflow: list, getById, create,
+then action methods submit, approve, confirm, complete, reject, and downloadDocument (returns a Blob for PDF download).
+*/
+
 export type HandoverStatus =
   | 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'CONFIRMED' | 'COMPLETED' | 'REJECTED';
 

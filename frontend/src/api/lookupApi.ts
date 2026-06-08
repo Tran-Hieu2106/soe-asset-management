@@ -1,6 +1,12 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse, LookupItem } from '../types/common.types';
 
+/*
+Four simple GET calls that return LookupItem[] arrays
+used to populate dropdowns throughout the app: 
+managingUnits, assetCategories, materialCategories, storageLocations.
+*/
+
 export const lookupApi = {
   managingUnits: () =>
     axiosInstance.get<ApiResponse<LookupItem[]>>('/lookups/managing-units').then(r => r.data.data),

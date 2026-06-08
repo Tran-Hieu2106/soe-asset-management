@@ -2,6 +2,11 @@ import axiosInstance from './axiosInstance';
 import type { ApiResponse } from '../types/common.types';
 import type { CurrentUser } from '../store/authStore';
 
+/*
+Four methods: list, getById, 
+create (takes a CreateUserPayload with a roleCode), 
+and deactivate (PATCH — soft delete).
+*/
 export interface CreateUserPayload {
   username: string;
   password: string;

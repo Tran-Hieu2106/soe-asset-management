@@ -9,6 +9,11 @@ import ExportButton, { downloadBlob } from '../../components/ExportButton';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 
+/*
+Filterable table with three export buttons (Excel, PDF, CSV). 
+Calls reportApi.exportAssets(format, params) which returns a Blob, 
+then uses downloadBlob to trigger a download.
+*/
 export default function AssetReportPage() {
   const [data, setData] = useState<AssetReportRow[]>([]);
   const [loading, setLoading] = useState(false);

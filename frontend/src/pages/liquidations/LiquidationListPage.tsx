@@ -6,6 +6,10 @@ import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
 import { ROLES, useHasAnyRole } from '../../utils/roleGuard';
 
+/*
+Lists all liquidation requests with their disposal method visible at a glance. 
+Only admins and asset managers can create new requests.
+*/
 export default function LiquidationListPage() {
   const canCreate = useHasAnyRole([ROLES.SYSTEM_ADMIN, ROLES.ASSET_MANAGER]);
   const [data, setData] = useState<Liquidation[]>([]);

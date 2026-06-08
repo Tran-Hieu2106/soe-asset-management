@@ -15,6 +15,15 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore, ROLE_LABELS } from '../store/authStore';
 import { ROLES } from '../utils/roleGuard';
 
+/*
+Renders the entire authenticated shell using Ant Design's Layout. 
+The MENU array defines all sidebar items — each has a roles array. 
+The filtered items (only those the current user's roles allow) are passed to <Menu>. 
+useLocation() drives the selectedKeys so the active page is always highlighted. 
+The header shows the user's name, roles (in Vietnamese), and a logout button. 
+<Outlet /> renders whatever child route is currently active in the main content area.
+*/
+
 const { Header, Sider, Content } = Layout;
 
 type MenuItem = { key: string; icon: ReactNode; label: ReactNode; roles: string[] };

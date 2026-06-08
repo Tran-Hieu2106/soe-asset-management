@@ -8,6 +8,11 @@ import type { LookupItem } from '../../types/common.types';
 import type { FixedAsset } from '../../types/asset.types';
 import PageHeader from '../../components/PageHeader';
 
+/*
+Create form that collects the asset, requesting unit, justification, 
+asset condition (including "Unusable"), estimated market value, 
+and required disposal method — all the financial and legal details needed to start the approval chain.
+*/
 export default function LiquidationFormPage() {
   const navigate = useNavigate();
   const [units, setUnits] = useState<LookupItem[]>([]);

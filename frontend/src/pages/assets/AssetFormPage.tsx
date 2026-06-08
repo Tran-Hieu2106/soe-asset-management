@@ -6,6 +6,13 @@ import { lookupApi } from '../../api/lookupApi';
 import type { LookupItem } from '../../types/common.types';
 import PageHeader from '../../components/PageHeader';
 
+/*
+Shared for both create and edit. 
+Detects edit mode by checking if id param exists. 
+On mount, loads lookup data for dropdowns and (if editing) pre-fills the form with form.setFieldsValue(). 
+On submit, calls assetApi.create or assetApi.update and navigates to the asset detail page.
+*/
+
 export default function AssetFormPage() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);

@@ -2,6 +2,10 @@ import { Card, Col, Row, Statistic } from 'antd';
 import { useAuthStore, ROLE_LABELS } from '../store/authStore';
 import PageHeader from '../components/PageHeader';
 
+/*
+A welcome screen — it greets the user by name, lists their roles in Vietnamese, 
+and shows one stat card: how many organizational units they're assigned to manage.
+*/
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
 
